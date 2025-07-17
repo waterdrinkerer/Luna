@@ -1,12 +1,78 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const Signup = () => {
   const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firebase: '',
+  });
 
-  const handleSignUp = () => {
-    // Validate inputs (optional for now)
-    navigate('/date-of-birth');
+  const handleSignUp = async () => {
+    let valid = true;
+    const newErrors = {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firebase: '',
+    };
+
+    // 🔍 Field validation
+    if (!name) {
+      newErrors.name = 'Name is required';
+      valid = false;
+    }
+    if (!email) {
+      newErrors.email = 'Email is required';
+      valid = false;
+    }
+    if (!password) {
+      newErrors.password = 'Password is required';
+      valid = false;
+    }
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    if (!valid) return;
+
+    try {
+      const auth = getAuth();
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await updateProfile(user, { displayName: name });
+
+      // Updated: Save name to Firestore with null for missing fields
+      await setDoc(doc(db, "users", user.uid), {
+        name,
+        email,
+        createdAt: new Date(),
+        profilePic: null, // Use null instead of empty string
+      });
+
+      navigate('/date-of-birth');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrors((prev) => ({ ...prev, firebase: error.message }));
+      } else {
+        setErrors((prev) => ({ ...prev, firebase: 'An unexpected error occurred.' }));
+      }
+    }
   };
 
   return (
@@ -40,25 +106,40 @@ const Signup = () => {
         <input
           type="text"
           placeholder="Name"
-          className="w-full p-3 mb-3 rounded-full bg-gray-100"
+          className="w-full p-3 mb-1 rounded-full bg-gray-100"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
+        {errors.name && <p className="text-red-500 text-xs mb-2">{errors.name}</p>}
+
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-3 mb-3 rounded-full bg-gray-100"
+          className="w-full p-3 mb-1 rounded-full bg-gray-100"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
+        {errors.password && <p className="text-red-500 text-xs mb-2">{errors.password}</p>}
+
         <input
           type="password"
           placeholder="Confirm Password"
-          className="w-full p-3 mb-3 rounded-full bg-gray-100"
+          className="w-full p-3 mb-1 rounded-full bg-gray-100"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
         />
+        {errors.confirmPassword && <p className="text-red-500 text-xs mb-2">{errors.confirmPassword}</p>}
+
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-3 mb-4 rounded-full bg-gray-100"
+          className="w-full p-3 mb-1 rounded-full bg-gray-100"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
+        {errors.email && <p className="text-red-500 text-xs mb-2">{errors.email}</p>}
 
-        <p className="text-xs text-center text-gray-500 mb-4">
+        <p className="text-xs text-center text-gray-500 my-4">
           By continuing, you agree with our Terms & Conditions and Privacy Policy
         </p>
 
@@ -68,6 +149,10 @@ const Signup = () => {
         >
           Sign up
         </button>
+
+        {errors.firebase && (
+          <p className="text-red-500 text-xs text-center mt-3">{errors.firebase}</p>
+        )}
       </motion.div>
     </div>
   );

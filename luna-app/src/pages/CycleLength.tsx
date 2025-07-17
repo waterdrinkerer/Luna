@@ -7,12 +7,12 @@ const CycleLength = () => {
   const navigate = useNavigate()
   const [length, setLength] = useState<number>(data.cycleLength || 28)
 
-  const handleNext = () => {
-    update({ cycleLength: length })
-    // Here you'll save to database or go to dashboard later
-    console.log('All onboarding data:', data, length)
-    navigate('/') // or direct to home
-  }
+const handleNext = () => {
+  update({ cycleLength: length });
+  console.log('All onboarding data:', data, length);
+  navigate('/profile-pic'); // ✅ go to profile pic page, NOT home
+};
+
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center p-6">

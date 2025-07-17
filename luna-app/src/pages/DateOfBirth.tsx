@@ -3,12 +3,27 @@ import useOnboarding from '../context/useOnboarding';
 import { useState } from 'react';
 
 const DateOfBirth = () => {
-  const { update } = useOnboarding();
+  const context = useOnboarding(); // Get the full context
+  const { update } = context; // Extract update function
   const navigate = useNavigate();
   const [dob, setDob] = useState<Date>(new Date());
 
   const handleNext = () => {
+    console.log("🔍 DateOfBirth - BEFORE update:");
+    console.log("- context.name:", context.name);
+    console.log("- context.dob:", context.dob);
+    console.log("- context.data:", context.data);
+    
     update({ dateOfBirth: dob });
+    
+    // Add a small delay to see the update
+    setTimeout(() => {
+      console.log("🔍 DateOfBirth - AFTER update:");
+      console.log("- context.name:", context.name);
+      console.log("- context.dob:", context.dob);
+      console.log("- context.data:", context.data);
+    }, 100);
+    
     navigate('/last-period');
   };
 
