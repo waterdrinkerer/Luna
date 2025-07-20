@@ -1,14 +1,18 @@
-// utils/cycleHistory.ts
+// src/utils/cycleHistory.ts
+// ✅ UNIFIED: Only uses periodLogs collection
 
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import { collection, query, orderBy, getDocs, getDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export interface PeriodRecord {
   id: string;
   startDate: Date;
   endDate: Date;
-  duration: number; // days
-  cycleLength?: number; // days from previous period
+  duration: number;
+  cycleLength?: number;
+  source?: string;
+  flow?: string;
+  notes?: string;
 }
 
 export interface CycleHistoryData {
@@ -18,122 +22,88 @@ export interface CycleHistoryData {
   averagePeriodLength: number;
 }
 
-// Format date for display
-const formatDateRange = (startDate: Date, endDate: Date): string => {
-  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-  const start = startDate.toLocaleDateString('en-US', options);
-  const end = endDate.toLocaleDateString('en-US', options);
-  return `${start} - ${end}`;
-};
-
-// Calculate cycle length between two periods
-const calculateCycleLength = (currentStart: Date, previousStart: Date): number => {
-  const diffTime = Math.abs(currentStart.getTime() - previousStart.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-};
-
-// Get user's period history from multiple sources
+// ✅ UNIFIED: Get cycle history from periodLogs ONLY
 export const getUserCycleHistory = async (userId: string, limitCount?: number): Promise<CycleHistoryData> => {
   try {
-    console.log("📊 Fetching cycle history for user:", userId);
+    console.log(`📊 Fetching cycle history for user: ${userId}`);
+    
+    // Get all periods from periodLogs collection ONLY
+    const periodLogsRef = collection(db, "users", userId, "periodLogs");
+    const periodsQuery = query(periodLogsRef, orderBy("startDate", "desc"));
+    const periodsSnapshot = await getDocs(periodsQuery);
 
-    // 1. Get from onboarding data (most recent from user profile)
-    const userRef = collection(db, "users");
-    const userQuery = query(userRef);
-    const userSnapshot = await getDocs(userQuery);
-    
-    let onboardingPeriod: PeriodRecord | null = null;
-    
-    // Find user's onboarding period data
-    userSnapshot.forEach((doc) => {
-      if (doc.id === userId) {
-        const userData = doc.data();
-        if (userData.lastPeriodStart && userData.lastPeriodEnd) {
-          const startDate = new Date(userData.lastPeriodStart);
-          const endDate = new Date(userData.lastPeriodEnd);
-          const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-          
-          onboardingPeriod = {
-            id: 'onboarding',
-            startDate,
-            endDate,
-            duration
-          };
+    console.log(`📅 Found ${periodsSnapshot.size} periods in periodLogs collection`);
+
+    if (periodsSnapshot.empty) {
+      return {
+        periods: [],
+        totalCycles: 0,
+        averageCycleLength: 28,
+        averagePeriodLength: 5
+      };
+    }
+
+    // Convert to PeriodRecord format
+    const allPeriods: PeriodRecord[] = periodsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        startDate: data.startDate instanceof Date ? data.startDate : new Date(data.startDate),
+        endDate: data.endDate instanceof Date ? data.endDate : new Date(data.endDate),
+        duration: data.duration || 5,
+        source: data.source || 'manual',
+        flow: data.flow || 'medium',
+        notes: data.notes || ''
+      };
+    });
+
+    // Calculate cycle lengths between periods
+    const periodsWithCycles = allPeriods.map((period, index) => {
+      if (index < allPeriods.length - 1) {
+        const current = period.startDate;
+        const next = allPeriods[index + 1].startDate;
+        const cycleLength = Math.round((current.getTime() - next.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Only include reasonable cycle lengths
+        if (cycleLength >= 18 && cycleLength <= 45) {
+          return { ...period, cycleLength };
         }
       }
+      return period;
     });
 
-    // 2. Get from period logs collection (future logged periods)
-    const periodLogsRef = collection(db, "users", userId, "periodLogs");
-    const periodQuery = limitCount 
-      ? query(periodLogsRef, orderBy("startDate", "desc"), limit(limitCount))
-      : query(periodLogsRef, orderBy("startDate", "desc"));
-    
-    const periodSnapshot = await getDocs(periodQuery);
-    
-    const loggedPeriods: PeriodRecord[] = [];
-    periodSnapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data.startDate && data.endDate) {
-        const startDate = new Date(data.startDate);
-        const endDate = new Date(data.endDate);
-        const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        loggedPeriods.push({
-          id: doc.id,
-          startDate,
-          endDate,
-          duration
-        });
-      }
-    });
+    // Apply limit if specified
+    const limitedPeriods = limitCount ? periodsWithCycles.slice(0, limitCount) : periodsWithCycles;
 
-    // 3. Combine and sort all periods
-    const allPeriods: PeriodRecord[] = [];
-    
-    if (onboardingPeriod) {
-      allPeriods.push(onboardingPeriod);
-    }
-    
-    allPeriods.push(...loggedPeriods);
-    
-    // Sort by start date (most recent first)
-    allPeriods.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
-    
-    // Remove duplicates (in case onboarding period was also logged)
-    const uniquePeriods = allPeriods.filter((period, index, arr) => {
-      return index === 0 || Math.abs(period.startDate.getTime() - arr[index - 1].startDate.getTime()) > 7 * 24 * 60 * 60 * 1000; // At least 7 days apart
-    });
+    // Calculate statistics
+    const cycleLengths = periodsWithCycles
+      .map(p => p.cycleLength)
+      .filter((length): length is number => length !== undefined);
 
-    // 4. Calculate cycle lengths
-    for (let i = 0; i < uniquePeriods.length - 1; i++) {
-      const currentPeriod = uniquePeriods[i];
-      const previousPeriod = uniquePeriods[i + 1];
-      currentPeriod.cycleLength = calculateCycleLength(currentPeriod.startDate, previousPeriod.startDate);
-    }
-
-    // 5. Calculate averages
-    const cycleLengths = uniquePeriods.filter(p => p.cycleLength).map(p => p.cycleLength!);
     const averageCycleLength = cycleLengths.length > 0 
-      ? Math.round(cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length)
-      : 28; // Default
+      ? Math.round(cycleLengths.reduce((sum, length) => sum + length, 0) / cycleLengths.length)
+      : 28;
 
-    const averagePeriodLength = uniquePeriods.length > 0
-      ? Math.round(uniquePeriods.reduce((sum, p) => sum + p.duration, 0) / uniquePeriods.length)
-      : 5; // Default
+    const averagePeriodLength = allPeriods.length > 0
+      ? Math.round(allPeriods.reduce((sum, period) => sum + period.duration, 0) / allPeriods.length)
+      : 5;
 
-    console.log("✅ Cycle history processed:", {
-      totalPeriods: uniquePeriods.length,
-      averageCycleLength,
-      averagePeriodLength
-    });
-
-    return {
-      periods: limitCount ? uniquePeriods.slice(0, limitCount) : uniquePeriods,
-      totalCycles: uniquePeriods.length,
+    const result = {
+      periods: limitedPeriods,
+      totalCycles: cycleLengths.length,
       averageCycleLength,
       averagePeriodLength
     };
+
+    console.log("✅ Cycle history processed:", {
+      totalPeriods: allPeriods.length,
+      returnedPeriods: limitedPeriods.length,
+      averageCycleLength,
+      averagePeriodLength,
+      source: "periodLogs collection only"
+    });
+
+    return result;
 
   } catch (error) {
     console.error("❌ Error fetching cycle history:", error);
@@ -146,31 +116,25 @@ export const getUserCycleHistory = async (userId: string, limitCount?: number): 
   }
 };
 
-// Format period for display in the list
 export const formatPeriodForDisplay = (period: PeriodRecord) => {
-  const dateRange = formatDateRange(period.startDate, period.endDate);
-  const durationText = `🩸 ${period.duration} day${period.duration > 1 ? 's' : ''}`;
-  const cycleText = period.cycleLength ? ` • ${period.cycleLength} day cycle` : '';
+  const startStr = period.startDate.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
+  });
   
+  const endStr = period.endDate.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
+  });
+
+  const dateRange = `${startStr} - ${endStr}`;
+  const durationText = `${period.duration} days`;
+  const cycleText = period.cycleLength ? ` • ${period.cycleLength} day cycle` : '';
+
   return {
     dateRange,
     durationText,
-    cycleText
+    cycleText,
+    fullText: `${dateRange} (${durationText}${cycleText})`
   };
-};
-
-// Get default/placeholder periods for new users
-export const getDefaultPeriods = (): PeriodRecord[] => {
-  const today = new Date();
-  const lastMonth = new Date(today);
-  lastMonth.setMonth(lastMonth.getMonth() - 1);
-  
-  return [
-    {
-      id: 'placeholder',
-      startDate: lastMonth,
-      endDate: new Date(lastMonth.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days later
-      duration: 5
-    }
-  ];
 };

@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { OnboardingContext } from "../context/OnboardingContext";
 
@@ -18,14 +18,6 @@ const ProfilePicChoose = () => {
   const [selectedPic, setSelectedPic] = useState<string | null>(null);
   const context = useContext(OnboardingContext);
 
-  // Debug: Log context values
-  console.log("🔍 ProfilePicChoose Context:", {
-    name: context?.name,
-    email: context?.email,
-    dob: context?.dob,
-    data: context?.data
-  });
-
   const handleContinue = async () => {
     if (!selectedPic || !auth.currentUser) {
       console.error("❌ Missing selectedPic or currentUser");
@@ -40,65 +32,98 @@ const ProfilePicChoose = () => {
       const { getDoc } = await import("firebase/firestore");
       const existingDoc = await getDoc(userRef);
       const existingData = existingDoc.exists() ? existingDoc.data() : {};
-      
+
       console.log("📥 Existing user data:", existingData);
 
-      // 🔍 FULL DEBUG - moved inside try block where existingData is accessible
-      console.log("🔍 FULL DEBUG:");
-      console.log("- auth.currentUser.email:", auth.currentUser.email);
-      console.log("- auth.currentUser.displayName:", auth.currentUser.displayName);
-      console.log("- context?.name:", context?.name);
-      console.log("- context?.email:", context?.email);  
-      console.log("- context?.dob:", context?.dob);
-      console.log("- context?.data:", JSON.stringify(context?.data, null, 2));
-      console.log("- existingData:", JSON.stringify(existingData, null, 2));
-
-      // Simplified: Now that individual fields are synced, prioritize them for cleaner logic
+      // ✅ FIXED: User profile data WITHOUT period information
       const userData = {
         name: existingData.name || context?.name || null,
-        email: existingData.email || context?.email || auth.currentUser.email || null,
-        dateOfBirth: context?.data.dateOfBirth?.toISOString() || existingData.dateOfBirth || null,
-        dob: context?.data.dateOfBirth?.toISOString() || existingData.dob || null, // Save both for compatibility
-        lastPeriodStart: context?.data.lastPeriodStart?.toISOString() || null,
-        lastPeriodEnd: context?.data.lastPeriodEnd?.toISOString() || null,
+        email:
+          existingData.email ||
+          context?.email ||
+          auth.currentUser.email ||
+          null,
+        dateOfBirth:
+          context?.data.dateOfBirth?.toISOString() ||
+          existingData.dateOfBirth ||
+          null,
+        dob:
+          context?.data.dateOfBirth?.toISOString() || existingData.dob || null,
         cycleLength: context?.data.cycleLength || 28,
+        height: context?.data.height || null,
         profilePic: selectedPic,
         hasCompletedOnboarding: true,
-        createdAt: existingData.createdAt || new Date().toISOString(), // Keep original creation date
-        updatedAt: new Date().toISOString(), // Add update timestamp
+        createdAt: existingData.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        // ✅ REMOVED: No period data in user profile anymore
       };
 
-      console.log("💾 Saving user data:", userData);
+      console.log("💾 Saving user profile data (no periods):", userData);
 
+      // Save user profile data (WITHOUT period information)
       await setDoc(userRef, userData, { merge: true });
-      console.log("✅ User data saved successfully");
-      
-      // NEW: Update context with the saved data so it reflects immediately
+      console.log("✅ User profile saved successfully");
+
+      if (context?.data.lastPeriodStart && context?.data.lastPeriodEnd) {
+        const docId = context.data.lastPeriodStart.toISOString().split("T")[0];
+        const periodRef = doc(
+          collection(db, "users", uid, "periodLogs"),
+          docId
+        );
+
+        const duration =
+          Math.ceil(
+            (context.data.lastPeriodEnd.getTime() -
+              context.data.lastPeriodStart.getTime()) /
+              (1000 * 60 * 60 * 24)
+          ) + 1;
+
+        const onboardingPeriod = {
+          startDate: context.data.lastPeriodStart.toISOString(),
+          endDate: context.data.lastPeriodEnd.toISOString(),
+          duration,
+          isOngoing: false,
+          loggedAt: new Date().toISOString(),
+          type: "past" as const,
+          source: "onboarding",
+          flow: "medium" as const,
+          notes: "Period from onboarding setup",
+        };
+
+        await setDoc(periodRef, onboardingPeriod);
+        console.log(
+          "✅ Onboarding period saved to periodLogs with doc ID:",
+          docId
+        );
+      }
+
+      // Update context with the saved data
       context?.setName(userData.name || null);
       context?.setEmail(userData.email || null);
       context?.setDob(userData.dateOfBirth || null);
       context?.setProfilePic(selectedPic);
-      
-      // Also update context.data
+
+      // ✅ FIXED: Update context.data WITHOUT period fields
       context?.update({
         name: userData.name || undefined,
-        dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth) : undefined,
-        lastPeriodStart: context?.data.lastPeriodStart,
-        lastPeriodEnd: context?.data.lastPeriodEnd,
+        dateOfBirth: userData.dateOfBirth
+          ? new Date(userData.dateOfBirth)
+          : undefined,
         cycleLength: context?.data.cycleLength,
+        height: context?.data.height,
+        // ✅ REMOVED: No period data in context after save
       });
-      
-      console.log("✅ Context updated after save");
-      
-      // Debug: Verify data was saved by reading it back
-      const { doc: docFunc } = await import("firebase/firestore");
-      const savedDoc = await getDoc(docFunc(db, "users", uid));
-      if (savedDoc.exists()) {
-        console.log("✅ Verified saved data:", savedDoc.data());
-      } else {
-        console.error("❌ Document doesn't exist after saving");
+
+      console.log(
+        "✅ Context updated after save (periods moved to periodLogs)"
+      );
+
+      // Finish onboarding to re-enable Firebase sync
+      if (context?.finishOnboarding) {
+        context.finishOnboarding();
+        console.log("✅ Onboarding finished - Firebase sync re-enabled");
       }
-      
+
       navigate("/home");
     } catch (err) {
       console.error("❌ Error saving user data:", err);
@@ -113,10 +138,31 @@ const ProfilePicChoose = () => {
 
       {/* Debug info */}
       <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
-        <p><strong>Name:</strong> {context?.name || "Not set"}</p>
-        <p><strong>Email:</strong> {context?.email || "Not set"}</p>
-        <p><strong>DOB:</strong> {context?.dob || "Not set"}</p>
-        <p><strong>User ID:</strong> {auth.currentUser?.uid || "Not logged in"}</p>
+        <p>
+          <strong>Name:</strong> {context?.name || "Not set"}
+        </p>
+        <p>
+          <strong>Email:</strong> {context?.email || "Not set"}
+        </p>
+        <p>
+          <strong>DOB:</strong> {context?.dob || "Not set"}
+        </p>
+        <p>
+          <strong>Height:</strong>{" "}
+          {context?.data.height ? `${context.data.height} cm` : "Not set"}
+        </p>
+        <p>
+          <strong>Last Period:</strong>{" "}
+          {context?.data.lastPeriodStart
+            ? `${context.data.lastPeriodStart.toLocaleDateString()} - ${context.data.lastPeriodEnd?.toLocaleDateString()}`
+            : "Not set"}
+        </p>
+        <p>
+          <strong>Storage:</strong> Period → periodLogs, Profile → users
+        </p>
+        <p>
+          <strong>User ID:</strong> {auth.currentUser?.uid || "Not logged in"}
+        </p>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -142,7 +188,7 @@ const ProfilePicChoose = () => {
           selectedPic ? "opacity-100" : "opacity-50 cursor-not-allowed"
         }`}
       >
-        Continue
+        Complete Setup
       </button>
     </div>
   );

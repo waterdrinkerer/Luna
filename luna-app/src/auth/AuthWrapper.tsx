@@ -7,6 +7,7 @@ import type { ReactElement } from "react";
 
 const onboardingRoutes = [
   "/date-of-birth",
+  "/height", // Add this if it's missing
   "/last-period",
   "/cycle-length",
   "/profile-pic",

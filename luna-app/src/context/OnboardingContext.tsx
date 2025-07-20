@@ -10,6 +10,7 @@ interface OnboardingData {
   lastPeriodStart?: Date;
   lastPeriodEnd?: Date;
   cycleLength?: number;
+  height?: number;
 }
 
 export interface OnboardingContextType {
@@ -24,15 +25,22 @@ export interface OnboardingContextType {
   setEmail: (email: string | null) => void;
   setDob: (dob: string | null) => void;
   setProfilePic: (url: string) => void;
+  
+  isOnboardingInProgress: boolean;
+  startOnboarding: () => void;
+  finishOnboarding: () => void;
 }
 
 export const OnboardingContext = createContext<OnboardingContextType | null>(null);
 
 export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState<OnboardingData>({});
+  const [isOnboardingInProgress, setIsOnboardingInProgress] = useState(false);
 
   const update = (values: Partial<OnboardingData>) => {
     console.log("📝 Context update called with:", values);
+    console.log("🔒 Onboarding in progress:", isOnboardingInProgress);
+    
     setData((prev) => ({ ...prev, ...values }));
     
     // Also update individual fields when they're part of the update
@@ -42,6 +50,16 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
     if (values.dateOfBirth !== undefined) {
       setDob(values.dateOfBirth ? values.dateOfBirth.toISOString().split('T')[0] : "");
     }
+  };
+
+  const startOnboarding = () => {
+    console.log("🚀 Starting onboarding - blocking Firebase sync");
+    setIsOnboardingInProgress(true);
+  };
+
+  const finishOnboarding = () => {
+    console.log("✅ Finishing onboarding - enabling Firebase sync");
+    setIsOnboardingInProgress(false);
   };
 
   const [name, setName] = useState("");
@@ -56,14 +74,21 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
       email,
       dob,
       profilePic,
-      data
+      data,
+      isOnboardingInProgress
     });
   };
 
-  // 🔄 Auto-fetch latest user data when auth changes
+  // ✅ FIXED: Auto-fetch user data WITHOUT period information
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log("🔄 Auth state changed:", user?.uid || "No user");
+      
+      // ✅ BLOCK Firebase sync during onboarding
+      if (isOnboardingInProgress) {
+        console.log("🔒 Onboarding in progress - SKIPPING Firebase sync");
+        return;
+      }
       
       if (user) {
         try {
@@ -76,10 +101,9 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
             const userData = docSnap.data();
             console.log("📥 Fetched user data:", userData);
             
-            // Updated: Handle null values properly - convert null to empty string for display
+            // Handle user profile data
             const newName = userData.name || "";
             const newEmail = userData.email || user.email || "";
-            // Handle both dob and dateOfBirth fields properly
             const dobFromFirestore = userData.dob || userData.dateOfBirth;
             const newDob = dobFromFirestore ? (typeof dobFromFirestore === 'string' ? dobFromFirestore.split('T')[0] : new Date(dobFromFirestore).toISOString().split('T')[0]) : "";
             const newProfilePic = userData.profilePic || "/assets/profile-placeholder.jpg";
@@ -96,13 +120,13 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
               profilePic: newProfilePic
             });
             
-            // Update onboarding data as well
+            // ✅ FIXED: Update onboarding data WITHOUT period information
             setData({
               name: userData.name,
               dateOfBirth: dobFromFirestore ? new Date(dobFromFirestore) : undefined,
-              lastPeriodStart: userData.lastPeriodStart ? new Date(userData.lastPeriodStart) : undefined,
-              lastPeriodEnd: userData.lastPeriodEnd ? new Date(userData.lastPeriodEnd) : undefined,
               cycleLength: userData.cycleLength || 28,
+              height: userData.height,
+              // ✅ REMOVED: No period data from user profile
             });
           } else {
             console.log("📄 No document found for user");
@@ -118,6 +142,7 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
         setDob("");
         setProfilePic("/assets/profile-placeholder.jpg");
         setData({});
+        setIsOnboardingInProgress(false);
       }
       
       // Log final state
@@ -125,9 +150,9 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isOnboardingInProgress]);
 
-  // Updated: Custom setters with logging and null handling
+  // Custom setters with logging and null handling
   const setNameWithLog = (newName: string | null) => {
     const nameValue = newName || "";
     console.log("📝 Setting name:", nameValue);
@@ -164,6 +189,9 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
         setEmail: setEmailWithLog,
         setDob: setDobWithLog,
         setProfilePic: setProfilePicWithLog,
+        isOnboardingInProgress,
+        startOnboarding,
+        finishOnboarding,
       }}
     >
       {children}

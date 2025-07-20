@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
-import { doc, setDoc } from "firebase/firestore"; // ✅ added
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 type Option = {
   label: string;
@@ -61,6 +61,25 @@ const sections: { title: string; options: Option[] }[] = [
 const LogSymptomsMood = () => {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Record<string, string[]>>({});
+  const [hasLoggedToday, setHasLoggedToday] = useState(false);
+
+  useEffect(() => {
+    const fetchTodaySymptoms = async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const docRef = doc(db, "symptomLogs", today);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data?.symptoms && typeof data.symptoms === "object") {
+          setSelected(data.symptoms);
+          setHasLoggedToday(true);
+        }
+      }
+    };
+
+    fetchTodaySymptoms();
+  }, []);
 
   const handleToggle = (sectionTitle: string, label: string) => {
     const current = selected[sectionTitle] || [];
@@ -73,7 +92,6 @@ const LogSymptomsMood = () => {
     }));
   };
 
-  // ✅ Save to Firestore
   const saveSymptomsLog = async (symptoms: Record<string, string[]>) => {
     const today = new Date().toISOString().split("T")[0];
     await setDoc(doc(db, "symptomLogs", today), {
@@ -84,7 +102,8 @@ const LogSymptomsMood = () => {
 
   return (
     <div className="min-h-screen bg-[#FFF9F5] px-5 pt-6 pb-24">
-      <h1 className="text-xl font-bold mb-5 text-[#333]">Log Today's Mood & Symptoms</h1>
+      <h1 className="text-xl font-bold mb-1 text-[#333]">Log Today's Mood & Symptoms</h1>
+      {hasLoggedToday && <p className="text-sm text-gray-600 mb-4">You already logged today 💜</p>}
 
       <div className="flex flex-col gap-6">
         {sections.map((section) => (
@@ -113,7 +132,7 @@ const LogSymptomsMood = () => {
 
       <button
         onClick={async () => {
-          await saveSymptomsLog(selected); // ✅ save to Firestore
+          await saveSymptomsLog(selected);
           navigate("/home");
         }}
         className="fixed bottom-6 left-6 right-6 py-3 rounded-full bg-[#7E5FFF] text-white font-semibold text-sm shadow-md"

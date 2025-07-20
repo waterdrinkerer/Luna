@@ -7,6 +7,7 @@ import Login from "./pages/Login.tsx";
 import Signup from "./pages/Signup.tsx";
 
 import DateOfBirth from "./pages/DateOfBirth.tsx";
+import Height from "./pages/Height.tsx";
 import LastPeriod from "./pages/LastPeriod.tsx";
 import CycleLength from "./pages/CycleLength.tsx";
 import ProfilePicChoose from "./pages/ProfilePicChoose.tsx";
@@ -17,6 +18,7 @@ import LogSymptoms from "./pages/LogSymptoms.tsx";
 import MyCycles from "./pages/MyCycles.tsx";
 import CalendarPage from "./pages/CalendarPage.tsx";
 import LogPeriod from "./pages/LogPeriod.tsx";
+import ManagePeriods from "./pages/ManagePeriods.tsx";
 
 import QuizCrampOMeter from "./pages/QuizCrampOMeter.tsx";
 import QuizMoonMood from "./pages/QuizMoonMood.tsx";
@@ -45,35 +47,44 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <AuthWrapper>
           <Routes>
             {/* Public routes */}
-           <Route path="/welcome" element={<Welcome />} />
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-
             {/* Onboarding flow */}
             <Route path="/date-of-birth" element={<DateOfBirth />} />
+            <Route path="/height" element={<Height />} />
             <Route path="/last-period" element={<LastPeriod />} />
             <Route path="/cycle-length" element={<CycleLength />} />
             <Route path="/profile-pic" element={<ProfilePicChoose />} />
-
             {/* Protected main app pages */}
             <Route path="/home" element={<Home />} />
             <Route path="/log-symptoms" element={<LogSymptoms />} />
             <Route path="/log-mood" element={<LogMood />} />
             <Route path="/my-cycles" element={<MyCycles />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/manage-periods" element={<ManagePeriods />} />
             <Route path="/log-period" element={<LogPeriod />} />
             <Route path="/quiz/moon-mood" element={<QuizMoonMood />} />
             <Route path="/quiz/cramp-o-meter" element={<QuizCrampOMeter />} />
             <Route path="/mooniebot" element={<Mooniebot />} />
             <Route path="/lounge" element={<LearningLounge />} />
-            <Route path="/learning/:title" element={<ArticlePage />} />
+            <Route path="/learning" element={<LearningLounge />} />
+            <Route path="/learning/:articleId" element={<ArticlePage />} />{" "}
             <Route path="/my-reports" element={<MyReports />} />
-            <Route path="/my-reports/last-cycle" element={<LastCycleReport />} />
-            <Route path="/my-reports/symptom-patterns" element={<SymptomPatterns />} />
-            <Route path="/my-reports/cycle-regularity" element={<CycleRegularity />} />
+            <Route
+              path="/my-reports/last-cycle"
+              element={<LastCycleReport />}
+            />
+            <Route
+              path="/my-reports/symptom-patterns"
+              element={<SymptomPatterns />}
+            />
+            <Route
+              path="/my-reports/cycle-regularity"
+              element={<CycleRegularity />}
+            />
             <Route path="/profile" element={<Profile />} />
             <Route path="/cycle-overview" element={<CycleOverview />} />
-            
           </Routes>
         </AuthWrapper>
       </OnboardingProvider>

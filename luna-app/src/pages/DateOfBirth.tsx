@@ -1,12 +1,17 @@
 import { useNavigate } from 'react-router-dom';
 import useOnboarding from '../context/useOnboarding';
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // ✅ Added useEffect
 
 const DateOfBirth = () => {
-  const context = useOnboarding(); // Get the full context
-  const { update } = context; // Extract update function
+  const context = useOnboarding();
+  const { update, startOnboarding } = context; // ✅ Get startOnboarding function
   const navigate = useNavigate();
   const [dob, setDob] = useState<Date>(new Date());
+
+  // ✅ Start onboarding when component mounts - BLOCKS Firebase sync
+  useEffect(() => {
+    startOnboarding();
+  }, [startOnboarding]);
 
   const handleNext = () => {
     console.log("🔍 DateOfBirth - BEFORE update:");
@@ -22,9 +27,8 @@ const DateOfBirth = () => {
       console.log("- context.name:", context.name);
       console.log("- context.dob:", context.dob);
       console.log("- context.data:", context.data);
+      navigate('/height'); // ✅ Navigate to height page
     }, 100);
-    
-    navigate('/last-period');
   };
 
   return (
