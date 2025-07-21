@@ -59,7 +59,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/pcos-info.png",
     content:
       "Polycystic Ovary Syndrome (PCOS) is a hormonal condition that affects 1 in 10 individuals with ovaries. Symptoms include irregular periods, acne, hair thinning, and difficulty with weight management. It may also affect fertility. Though the cause isn’t fully known, it involves insulin resistance and hormone imbalances. PCOS is manageable through lifestyle changes, medications, and regular monitoring. If you suspect PCOS, don’t hesitate to seek help—early diagnosis makes a big difference in managing symptoms.",
-    relatedArticles: ["Irregular periods explained", "Tracking cervical mucus"],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
     credentials: "Reviewed by Dr. Luna Health Team",
   },
 
@@ -71,7 +71,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/cervical-mucus.png",
     content:
       "Cervical mucus changes throughout your cycle, offering clues about your fertility window. After your period, mucus may be dry or sticky. As ovulation nears, it becomes creamy, then watery, and finally egg-white-like—a sign you’re at your most fertile. Tracking these shifts can improve your awareness of your cycle and help with conception or contraception. It’s an empowering, natural way to stay in tune with your body’s rhythm.",
-    relatedArticles: ["Irregular periods explained", "Understanding PCOS"],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
     credentials: "Reviewed by Dr. Luna Health Team",
   },
 
@@ -84,10 +84,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/cramp-relief.png",
     content:
       "Cramps got you curled up in bed? Try these natural remedies. Apply a heating pad to relax muscles, drink herbal teas like chamomile or ginger, and do light stretches or yoga. Magnesium-rich foods such as dark leafy greens and bananas can also help ease discomfort. Avoid caffeine and processed foods during your period to minimize inflammation. Small changes can bring big relief—your body will thank you!",
-    relatedArticles: [
-      "Using heat therapy effectively",
-      "Comfortable period products",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "cycle-supporting-foods": {
@@ -98,10 +95,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/cycle-foods.png",
     content:
       "Eating with your cycle can support hormonal balance and energy levels. During menstruation, focus on iron-rich foods like spinach and lentils. In the follicular phase, opt for fresh fruits and veggies to boost energy. Ovulation calls for zinc and B-vitamins—think eggs and whole grains. The luteal phase benefits from magnesium and healthy fats, like avocados and nuts. Nourish your body with intention, and it’ll respond with balance and strength.",
-    relatedArticles: [
-      "Boosting fertility with diet",
-      "Period hacks for busy days",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "heat-therapy-guide": {
@@ -112,10 +106,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/heat-therapy.png",
     content:
       "Heat therapy is a simple but effective way to soothe period cramps and muscle tension. Apply a heating pad to your lower abdomen for 15–20 minutes at a time. Warm baths with Epsom salts also relax the body and improve blood flow. Heat works by relaxing uterine muscles and reducing pain signals. It’s natural, safe, and often just as effective as over-the-counter meds when used consistently.",
-    relatedArticles: [
-      "How to reduce cramps naturally",
-      "Gentle yoga for cramps",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "period-products-guide": {
@@ -126,10 +117,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/period-products.png",
     content:
       "Choosing the right period product is key to comfort and confidence. Pads and tampons are classics, but menstrual cups, period panties, and reusable pads are eco-friendly alternatives worth exploring. Some people find soft discs more comfortable during sleep or workouts. What’s comfortable varies from person to person—try a few and listen to your body. There’s no one-size-fits-all, but there’s definitely a fit for you.",
-    relatedArticles: [
-      "Period hacks for busy days",
-      "Foods to support your cycle",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "period-life-hacks": {
@@ -140,10 +128,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/period-hacks.png",
     content:
       "Juggling life during your period? Prep ahead! Keep spare products in your bag, wear dark comfy clothes, and schedule breaks for self-care. Use a tracking app to anticipate symptoms. Stay hydrated and snack on energizing foods like fruit or nuts. A portable heating patch can be a lifesaver during meetings or classes. With a little planning, even the busiest days can feel manageable.",
-    relatedArticles: [
-      "Comfortable period products",
-      "Foods to support your cycle",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   // Fertility
@@ -155,10 +140,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/fertility-myths.png",
     content:
       "Fertility comes with many myths—like needing to have sex daily or that birth control ruins fertility. In reality, timing matters more than frequency, and most regain fertility soon after stopping contraceptives. Age, health, and lifestyle play bigger roles. Don’t fall for internet rumors—trust science, your doctor, and your body. Clearing up misconceptions empowers smarter decisions on your journey to conception.",
-    relatedArticles: [
-      "Boosting fertility with diet",
-      "Ovulation signs to notice",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "ovulation-signs-guide": {
@@ -169,7 +151,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/ovulation-signs.png",
     content:
       "Ovulation is a key phase in your cycle when an egg is released. You may notice changes in cervical mucus (stretchy and clear), a slight rise in basal body temperature, or mild one-sided pelvic pain. Some also experience increased libido. These subtle clues can help you better understand your cycle, especially if you're trying to conceive or avoid pregnancy. Tracking them builds awareness and confidence in your reproductive health.",
-    relatedArticles: ["Fertility tracking tips", "Fertility myths debunked"],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "fertility-boosting-diet": {
@@ -180,7 +162,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/fertility-diet.png",
     content:
       "Your diet can support or hinder fertility. Prioritize whole foods: leafy greens, berries, healthy fats, and lean proteins. Folate, iron, and omega-3s are essential. Limit sugar and trans fats, which may affect ovulation. Hydration and gut health also play a role, so include probiotics like yogurt or kimchi. While no food guarantees results, a balanced, nutrient-rich diet creates a strong foundation for reproductive health.",
-    relatedArticles: ["Fertility myths debunked", "Ovulation signs to notice"],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "pregnancy-test-timing": {
@@ -191,10 +173,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/pregnancy-test.png",
     content:
       "The best time to take a pregnancy test is after you’ve missed your period—typically around 10–14 days after ovulation. Testing too early may lead to inaccurate results. Use first morning urine for the highest concentration of hCG (the pregnancy hormone). If your cycle is irregular, wait a few extra days. Follow up with a doctor to confirm the results and discuss next steps for your health.",
-    relatedArticles: [
-      "Fertility tracking tips",
-      "Boosting fertility with diet",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "fertility-tracking-mastery": {
@@ -205,10 +184,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/fertility-tracking.png",
     content:
       "Tracking your fertility can feel overwhelming at first, but it gets easier with the right tools. Apps, basal thermometers, and ovulation predictor kits (OPKs) can help. Consistency is key—track your cycle, symptoms, and temperature daily. Watch for cervical mucus changes and try journaling patterns. Over time, you’ll notice trends that help you predict ovulation and understand your body better, whether you’re trying to conceive or not.",
-    relatedArticles: [
-      "Ovulation signs to notice",
-      "When to take a pregnancy test",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   // Self-care
@@ -220,10 +196,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/selfcare-pms.png",
     content:
       "PMS can bring mood swings, bloating, and irritability. Prioritize gentle self-care—take warm baths, journal your feelings, listen to calming music, or cozy up with a blanket and tea. Move your body gently with stretching or walking. Avoid overstimulation and say no to things that drain you. Creating a comforting space helps soothe both body and mind as hormones fluctuate.",
-    relatedArticles: [
-      "Journaling for emotional health",
-      "Gentle yoga for cramps",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "cycle-journaling-guide": {
@@ -234,7 +207,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/journaling.png",
     content:
       "Journaling offers a safe outlet to explore thoughts, emotions, and patterns. During your cycle, hormones can amplify feelings—writing them down helps process them. Try prompts like 'What am I feeling today?' or 'What does my body need right now?' No need for structure, just let your pen flow. Over time, journaling builds self-awareness and emotional resilience through all phases of your cycle.",
-    relatedArticles: ["Self-care during PMS", "Aromatherapy and cycles"],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "aromatherapy-cycles": {
@@ -245,10 +218,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/aromatherapy.png",
     content:
       "Aromatherapy uses plant-based oils to support mood and well-being. Lavender helps with anxiety and sleep, peppermint soothes headaches, and clary sage can ease cramps. Diffuse, apply diluted oil to pulse points, or add to a warm bath. Scents can trigger emotional memory and calm the nervous system. It’s a lovely, gentle way to support your cycle through sensory care.",
-    relatedArticles: [
-      "Journaling for emotional health",
-      "Gentle yoga for cramps",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "yoga-for-cramps": {
@@ -259,7 +229,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/yoga-cramps.png",
     content:
       "When cramps hit, gentle yoga can be your best friend. Try poses like Child’s Pose, Cat-Cow, and Reclining Twist. These movements increase circulation and relax pelvic muscles. Focus on breathing deeply and moving slowly. Avoid intense inversions, and listen to your body’s cues. Even 10 minutes of mindful stretching can ease discomfort and bring emotional relief during your period.",
-    relatedArticles: ["Self-care during PMS", "Aromatherapy and cycles"],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "cozy-period-routine": {
@@ -270,7 +240,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/cozy-routine.png",
     content:
       "Your cycle is a great time to slow down and build comforting routines. Light a candle, make warm tea, put on soft clothes, and wind down with a book or gentle playlist. Creating cozy rituals reminds you to nurture yourself when energy dips. A consistent routine—even just 30 minutes a day—can improve sleep, mood, and overall sense of balance. You deserve that quiet time.",
-    relatedArticles: ["Gentle yoga for cramps", "Self-care during PMS"],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   // Mental Health
@@ -282,10 +252,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/mood-swings.png",
     content:
       "Mood swings during your cycle are tied to hormonal shifts—especially estrogen and progesterone. These changes affect brain chemicals like serotonin, impacting emotions. You may feel weepy, irritable, or anxious without clear reason. Knowing it's hormonal can bring relief. Self-kindness, rest, and good nutrition help. If mood changes are extreme, talk to a doctor—it might be PMDD. You're not alone, and your feelings are valid.",
-    relatedArticles: [
-      "Managing stress during your cycle",
-      "The PMS-anxiety connection",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "stress-cycle-management": {
@@ -296,7 +263,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/stress-management.png",
     content:
       "Stress hits harder during certain cycle phases, especially PMS and menstruation. Try mindfulness practices like deep breathing, nature walks, or journaling. Nourish your body with grounding foods like oats, nuts, and warm soups. Simplify your schedule where possible and lean on support. Managing stress is a skill—and during your cycle, it's a necessity for balance and well-being.",
-    relatedArticles: ["Period mood swings explained", "Grounding techniques"],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "pms-anxiety-connection": {
@@ -307,10 +274,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/pms-anxiety.png",
     content:
       "Many experience heightened anxiety right before their period. It’s linked to the dip in progesterone and serotonin during the luteal phase. You may feel on edge, overwhelmed, or restless. Recognize it as a hormonal wave—not a personal failure. Grounding tools, magnesium-rich foods, and light movement can help regulate mood. If anxiety becomes unmanageable, consider seeking support—it’s okay to ask for help.",
-    relatedArticles: [
-      "Managing stress during your cycle",
-      "Grounding techniques",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "grounding-techniques-cycle": {
@@ -321,10 +285,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/grounding.png",
     content:
       "Grounding helps bring your awareness back to the present when emotions feel overwhelming. Try the 5-4-3-2-1 method: name five things you see, four you can touch, three you hear, two you smell, one you taste. Walking barefoot on grass, holding a cold object, or focusing on your breath also works. These small practices gently regulate the nervous system and calm anxiety.",
-    relatedArticles: [
-      "The PMS-anxiety connection",
-      "Cycle syncing and emotions",
-    ],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 
   "emotion-cycle-syncing": {
@@ -335,7 +296,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/emotion-sync.png",
     content:
       "Your emotions ebb and flow with your cycle. During the follicular phase, energy and optimism rise. Ovulation brings social sparks, while the luteal phase may bring reflection and irritability. Menstruation invites introspection. Knowing these shifts helps you plan accordingly—like scheduling creative tasks post-period or quiet time during PMS. Syncing with your cycle is like learning your own emotional language.",
-    relatedArticles: ["Grounding techniques", "Period mood swings explained"],
+    relatedArticles: ["vaginal-discharge-guide", "irregular-periods-explained"],
   },
 };
 

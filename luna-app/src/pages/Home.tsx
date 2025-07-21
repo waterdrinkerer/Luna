@@ -7,7 +7,8 @@ import follicularImg from "../assets/widget_follicular.png";
 import ovulationImg from "../assets/widget_ovulation.png";
 import lutealImg from "../assets/widget_luteal.png";
 import pmsImg from "../assets/widget_pms.png";
-import { fetchQuote } from "../utils/fetchQuote";
+import QuoteCard from "../components/QuoteCard";
+
 import WeightLoggerModal from "../components/WeightLoggerModal";
 import BottomNav from "../components/BottomNav";
 import CyclePhaseWidget from "../components/CyclePhaseWidgets";
@@ -86,7 +87,6 @@ const Home = () => {
   // ✅ ADD ML PREDICTIONS HOOK
   const { predictions: mlPredictions, loading: mlLoading } = useMLPredictions();
 
-  const [quote, setQuote] = useState({ text: "", author: "" });
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [latestWeight, setLatestWeight] = useState<number | null>(null);
   const [recentPeriods, setRecentPeriods] = useState<PeriodRecord[]>([]);
@@ -138,29 +138,29 @@ const Home = () => {
       return {
         pregnancyChance: "Loading...",
         expectedSymptoms: "Loading...",
-        confidence: "Loading"
+        confidence: "Loading",
       };
     }
 
     // Use ML predictions for pregnancy chance
     const getPregnancyChance = () => {
       const phase = currentPhaseData.phase;
-      if (phase === 'ovulation' || phase === 'fertile') return 'HIGH';
-      if (phase === 'follicular') return 'MEDIUM';
-      return 'LOW';
+      if (phase === "ovulation" || phase === "fertile") return "HIGH";
+      if (phase === "follicular") return "MEDIUM";
+      return "LOW";
     };
 
     // Use ML predictions for expected symptoms
     const getExpectedSymptoms = () => {
       if (!mlPredictions.dailySymptoms) return "Mild discomfort";
-      
+
       const symptoms = mlPredictions.dailySymptoms;
       const topSymptom = symptoms.topSymptoms?.[0];
-      
+
       if (topSymptom) {
         return `${topSymptom.description} ${topSymptom.name}`;
       }
-      
+
       // Fallback to overall description
       return symptoms.descriptions?.overall || "Mild discomfort";
     };
@@ -168,8 +168,12 @@ const Home = () => {
     return {
       pregnancyChance: getPregnancyChance(),
       expectedSymptoms: getExpectedSymptoms(),
-      confidence: mlPredictions.confidence?.overall === 'high' ? "AI-Powered" : 
-                 mlPredictions.confidence?.overall === 'medium' ? "Personalized" : "Basic"
+      confidence:
+        mlPredictions.confidence?.overall === "high"
+          ? "AI-Powered"
+          : mlPredictions.confidence?.overall === "medium"
+          ? "Personalized"
+          : "Basic",
     };
   };
 
@@ -195,12 +199,14 @@ const Home = () => {
           enhancedCycleData = {
             ...freshCycleData,
             // Use ML predicted cycle length if available
-            cycleLength: mlPredictions.nextPeriod?.daysUntil ? 
-              (freshCycleData.cycleLength || 28) : 
-              (freshCycleData.cycleLength || 28)
+            cycleLength: mlPredictions.nextPeriod?.daysUntil
+              ? freshCycleData.cycleLength || 28
+              : freshCycleData.cycleLength || 28,
           };
         } else {
-          console.log("📊 Using fallback calculations (ML failed or unavailable)");
+          console.log(
+            "📊 Using fallback calculations (ML failed or unavailable)"
+          );
         }
 
         // Calculate current phase with enhanced data
@@ -213,7 +219,9 @@ const Home = () => {
           message: phaseData.message,
           mlAvailable: !!mlPredictions,
           mlLoading,
-          source: mlPredictions ? "periodLogs + ML predictions" : "periodLogs + math fallback"
+          source: mlPredictions
+            ? "periodLogs + ML predictions"
+            : "periodLogs + math fallback",
         });
 
         // Fetch weight data
@@ -225,11 +233,6 @@ const Home = () => {
 
         console.log("📊 Recent periods loaded:", cycleHistory.periods.length);
       }
-
-      // Fetch quote
-      fetchQuote().then((q) => {
-        if (q) setQuote(q);
-      });
     };
 
     initializeData();
@@ -239,29 +242,39 @@ const Home = () => {
   const getDaysToNextPeriod = (): number => {
     // ✅ Use ML prediction if available
     if (mlPredictions?.nextPeriod?.daysUntil !== undefined) {
-      console.log("🤖 Home using ML prediction for next period:", mlPredictions.nextPeriod.daysUntil);
+      console.log(
+        "🤖 Home using ML prediction for next period:",
+        mlPredictions.nextPeriod.daysUntil
+      );
       return Math.max(1, mlPredictions.nextPeriod.daysUntil);
     }
-    
+
     // Fallback to math calculation
-    if (!realTimeCycleData.lastPeriodStart || !realTimeCycleData.cycleLength) return 0;
-    
+    if (!realTimeCycleData.lastPeriodStart || !realTimeCycleData.cycleLength)
+      return 0;
+
     const today = new Date();
-    const periodStartDate = realTimeCycleData.lastPeriodStart instanceof Date 
-      ? realTimeCycleData.lastPeriodStart 
-      : new Date(realTimeCycleData.lastPeriodStart as string | number | Date);
-      
-    const daysSinceStart = Math.floor((today.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24));
+    const periodStartDate =
+      realTimeCycleData.lastPeriodStart instanceof Date
+        ? realTimeCycleData.lastPeriodStart
+        : new Date(realTimeCycleData.lastPeriodStart as string | number | Date);
+
+    const daysSinceStart = Math.floor(
+      (today.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
     const currentCycleDay = daysSinceStart + 1;
-    
-    const daysUntilNext = Math.max(1, realTimeCycleData.cycleLength - currentCycleDay + 1);
-    
-    console.log('📊 Home math calculation fallback:', {
+
+    const daysUntilNext = Math.max(
+      1,
+      realTimeCycleData.cycleLength - currentCycleDay + 1
+    );
+
+    console.log("📊 Home math calculation fallback:", {
       currentCycleDay,
       cycleLength: realTimeCycleData.cycleLength,
       daysUntilNext,
     });
-    
+
     return daysUntilNext;
   };
 
@@ -271,8 +284,14 @@ const Home = () => {
   // ✅ Override the phase data with consistent calculation
   const enhancedPhaseData = {
     ...currentPhaseData,
-    daysLeft: daysToNextPeriod > 0 ? `${daysToNextPeriod} days` : currentPhaseData.daysLeft,
-    message: daysToNextPeriod > 0 ? `Period in ${daysToNextPeriod} days` : currentPhaseData.message
+    daysLeft:
+      daysToNextPeriod > 0
+        ? `${daysToNextPeriod} days`
+        : currentPhaseData.daysLeft,
+    message:
+      daysToNextPeriod > 0
+        ? `Period in ${daysToNextPeriod} days`
+        : currentPhaseData.message,
   };
 
   const phaseStyle = PHASE_STYLES[enhancedPhaseData.phase];
@@ -293,13 +312,17 @@ const Home = () => {
   });
 
   // ✅ SHOW LOADING UNTIL ML COMPLETES
-  if (mlLoading || currentPhaseData.message === 'Loading...') {
+  if (mlLoading || currentPhaseData.message === "Loading...") {
     return (
       <div className="min-h-screen bg-[#F4F1FA] flex flex-col items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-purple-600 font-medium">🤖 Loading AI-powered insights...</p>
-          <p className="text-sm text-gray-500 mt-2">Please wait while we analyze your cycle</p>
+          <p className="text-purple-600 font-medium">
+            🤖 Loading AI-powered insights...
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Please wait while we analyze your cycle
+          </p>
         </div>
       </div>
     );
@@ -388,11 +411,8 @@ const Home = () => {
       </div>
 
       {/* Section 4: Motivational Quote */}
-      <div className="rounded-lg bg-white shadow p-4 mt-4">
-        <p className="italic text-sm text-gray-700">"{quote.text}"</p>
-        <p className="text-right text-xs font-semibold mt-2">
-          — {quote.author}
-        </p>
+      <div className="px-4">
+        <QuoteCard />
       </div>
 
       {/* Section 5: Mood + Symptoms */}

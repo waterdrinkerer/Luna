@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { db } from "../firebase";
+import { db, auth } from "../firebase"; // ✅ Added auth import
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
 type Option = {
@@ -65,16 +65,32 @@ const LogSymptomsMood = () => {
 
   useEffect(() => {
     const fetchTodaySymptoms = async () => {
-      const today = new Date().toISOString().split("T")[0];
-      const docRef = doc(db, "symptomLogs", today);
-      const docSnap = await getDoc(docRef);
+      const user = auth.currentUser; // ✅ Get current user
+      if (!user) {
+        console.log("❌ No authenticated user found");
+        return;
+      }
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data?.symptoms && typeof data.symptoms === "object") {
-          setSelected(data.symptoms);
-          setHasLoggedToday(true);
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        // ✅ Updated path: users/{userId}/symptomLogs/{date}
+        const docRef = doc(db, "users", user.uid, "symptomLogs", today);
+        const docSnap = await getDoc(docRef);
+
+        console.log("🔍 Fetching symptoms for:", user.uid, "date:", today);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          console.log("✅ Found existing symptoms:", data);
+          if (data?.symptoms && typeof data.symptoms === "object") {
+            setSelected(data.symptoms);
+            setHasLoggedToday(true);
+          }
+        } else {
+          console.log("📝 No symptoms logged for today");
         }
+      } catch (error) {
+        console.error("❌ Error fetching today's symptoms:", error);
       }
     };
 
@@ -93,11 +109,24 @@ const LogSymptomsMood = () => {
   };
 
   const saveSymptomsLog = async (symptoms: Record<string, string[]>) => {
-    const today = new Date().toISOString().split("T")[0];
-    await setDoc(doc(db, "symptomLogs", today), {
-      symptoms: symptoms,
-      timestamp: new Date().toISOString(),
-    });
+    const user = auth.currentUser; // ✅ Get current user
+    if (!user) {
+      console.log("❌ No authenticated user found");
+      return;
+    }
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      // ✅ Updated path: users/{userId}/symptomLogs/{date}
+      await setDoc(doc(db, "users", user.uid, "symptomLogs", today), {
+        symptoms: symptoms,
+        timestamp: new Date().toISOString(),
+      });
+
+      console.log("✅ Symptoms saved successfully for:", user.uid);
+    } catch (error) {
+      console.error("❌ Error saving symptoms:", error);
+    }
   };
 
   return (

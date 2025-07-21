@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "../components/BottomNav";
-import { db } from "../firebase";
+import { db, auth } from "../firebase"; // ✅ Added auth import
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const moods = [
@@ -24,16 +24,32 @@ const LogMood = () => {
 
   useEffect(() => {
     const fetchTodayMood = async () => {
-      const today = new Date().toISOString().split("T")[0];
-      const docRef = doc(db, "moodLogs", today);
-      const docSnap = await getDoc(docRef);
+      const user = auth.currentUser; // ✅ Get current user
+      if (!user) {
+        console.log("❌ No authenticated user found");
+        return;
+      }
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data?.moods && Array.isArray(data.moods)) {
-          setSelectedMoods(data.moods);
-          setHasLoggedToday(true);
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        // ✅ Updated path: users/{userId}/moodLogs/{date}
+        const docRef = doc(db, "users", user.uid, "moodLogs", today);
+        const docSnap = await getDoc(docRef);
+
+        console.log("🔍 Fetching mood for:", user.uid, "date:", today);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          console.log("✅ Found existing mood:", data);
+          if (data?.moods && Array.isArray(data.moods)) {
+            setSelectedMoods(data.moods);
+            setHasLoggedToday(true);
+          }
+        } else {
+          console.log("📝 No mood logged for today");
         }
+      } catch (error) {
+        console.error("❌ Error fetching today's mood:", error);
       }
     };
 
@@ -47,11 +63,24 @@ const LogMood = () => {
   };
 
   const saveMoodLog = async (moods: string[]) => {
-    const today = new Date().toISOString().split("T")[0];
-    await setDoc(doc(db, "moodLogs", today), {
-      moods: moods,
-      timestamp: new Date().toISOString(),
-    });
+    const user = auth.currentUser; // ✅ Get current user
+    if (!user) {
+      console.log("❌ No authenticated user found");
+      return;
+    }
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      // ✅ Updated path: users/{userId}/moodLogs/{date}
+      await setDoc(doc(db, "users", user.uid, "moodLogs", today), {
+        moods: moods,
+        timestamp: new Date().toISOString(),
+      });
+
+      console.log("✅ Mood saved successfully for:", user.uid);
+    } catch (error) {
+      console.error("❌ Error saving mood:", error);
+    }
   };
 
   return (

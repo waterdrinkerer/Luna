@@ -324,7 +324,7 @@ class LunaMLService {
       const symptoms = [
         { name: 'cramps', intensity: data.cramp_intensity, description: data.descriptions.cramps },
         { name: 'fatigue', intensity: data.fatigue_level, description: data.descriptions.fatigue },
-        { name: 'mood_changes', intensity: data.mood_impact, description: data.descriptions.mood }
+        { name: 'mood changes', intensity: data.mood_impact, description: data.descriptions.mood }
       ].sort((a, b) => b.intensity - a.intensity);
 
       return {
