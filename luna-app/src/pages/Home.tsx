@@ -8,7 +8,6 @@ import ovulationImg from "../assets/widget_ovulation.png";
 import lutealImg from "../assets/widget_luteal.png";
 import pmsImg from "../assets/widget_pms.png";
 import QuoteCard from "../components/QuoteCard";
-
 import WeightLoggerModal from "../components/WeightLoggerModal";
 import BottomNav from "../components/BottomNav";
 import CyclePhaseWidget from "../components/CyclePhaseWidgets";
@@ -17,6 +16,7 @@ import { db, auth } from "../firebase";
 import {
   calculateCurrentCyclePhase,
   getMostRecentCycleData,
+  getDaysUntilNextPeriod,
   type CycleData,
   type CyclePhase,
 } from "../utils/cycleCalculator";
@@ -25,54 +25,68 @@ import {
   formatPeriodForDisplay,
   type PeriodRecord,
 } from "../utils/cycleHistory";
-import { useMLPredictions } from "../hooks/useMLPredictions"; // ✅ ADD ML HOOK
+import { useMLPredictions } from "../hooks/useMLPredictions";
 
-// Phase styles and assets
+// Enhanced phase styles with gradients and emojis
 const PHASE_STYLES: Record<
   string,
-  { bgColor: string; text: string; subtext: string; image: string }
+  { bgColor: string; gradient: string; text: string; subtext: string; image: string; emoji: string }
 > = {
   countdown: {
     bgColor: "#6345FE",
-    text: "Period in,",
+    gradient: "from-purple-500 via-blue-500 to-indigo-600",
+    text: "Period countdown",
     subtext: "Lower chance to get pregnant",
     image: countdownImg,
+    emoji: "🔮"
   },
   period: {
     bgColor: "#DA4949",
-    text: "Day 1",
+    gradient: "from-red-400 via-pink-500 to-rose-600",
+    text: "Period active",
     subtext: "Don't forget to log your flow",
     image: periodImg,
+    emoji: "🌹"
   },
   follicular: {
     bgColor: "#C8B6FF",
+    gradient: "from-purple-300 via-violet-400 to-purple-500",
     text: "Follicular Phase",
     subtext: "You might feel more energetic",
     image: follicularImg,
+    emoji: "🌱"
   },
   ovulation: {
     bgColor: "#23273D",
+    gradient: "from-gray-700 via-slate-800 to-gray-900",
     text: "Ovulation",
     subtext: "High chance to get pregnant",
     image: ovulationImg,
+    emoji: "✨"
   },
   fertile: {
     bgColor: "#2A58CD",
+    gradient: "from-blue-500 via-cyan-500 to-teal-500",
     text: "Fertile Window",
     subtext: "High chance to get pregnant",
     image: ovulationImg,
+    emoji: "💫"
   },
   luteal: {
     bgColor: "#FDCB6E",
-    text: "Your body is winding down.",
-    subtext: "Take it easy.",
+    gradient: "from-yellow-400 via-orange-400 to-amber-500",
+    text: "Luteal Phase",
+    subtext: "Take it easy",
     image: lutealImg,
+    emoji: "🍂"
   },
   pms: {
     bgColor: "#646380",
-    text: "Cravings or mood swings?",
-    subtext: "You're not alone <3",
+    gradient: "from-gray-500 via-slate-600 to-gray-700",
+    text: "PMS Phase",
+    subtext: "You're not alone ❤️",
     image: pmsImg,
+    emoji: "🤗"
   },
 };
 
@@ -84,7 +98,6 @@ const Home = () => {
     profilePic: "/assets/profile-placeholder.jpg",
   };
 
-  // ✅ ADD ML PREDICTIONS HOOK
   const { predictions: mlPredictions, loading: mlLoading } = useMLPredictions();
 
   const [showWeightModal, setShowWeightModal] = useState(false);
@@ -96,8 +109,6 @@ const Home = () => {
     subtext: "Calculating your cycle...",
   });
   const [realTimeCycleData, setRealTimeCycleData] = useState<CycleData>({});
-
-  // Removed duplicate declaration of phaseStyle
 
   const fetchLatestWeight = async () => {
     const user = auth.currentUser;
@@ -188,40 +199,24 @@ const Home = () => {
           return; // Don't update anything until ML finishes
         }
 
-        // ✅ UNIFIED: Get real-time cycle data from periodLogs ONLY
+        // ✅ ENHANCED: Get cycle data with proper period detection
         const freshCycleData = await getMostRecentCycleData(user.uid);
         setRealTimeCycleData(freshCycleData);
 
-        // ✅ ML-ENHANCED: Use ML predictions if available for cycle data
-        let enhancedCycleData = freshCycleData;
-        if (mlPredictions && !mlLoading) {
-          console.log("🤖 Using ML predictions for cycle calculations");
-          enhancedCycleData = {
-            ...freshCycleData,
-            // Use ML predicted cycle length if available
-            cycleLength: mlPredictions.nextPeriod?.daysUntil
-              ? freshCycleData.cycleLength || 28
-              : freshCycleData.cycleLength || 28,
-          };
-        } else {
-          console.log(
-            "📊 Using fallback calculations (ML failed or unavailable)"
-          );
-        }
-
-        // Calculate current phase with enhanced data
-        const phaseData = calculateCurrentCyclePhase(enhancedCycleData);
+        // ✅ ENHANCED: Calculate phase with current period awareness
+        const phaseData = calculateCurrentCyclePhase(freshCycleData);
         setCurrentPhaseData(phaseData);
 
-        console.log("🤖 Using ML-enhanced cycle data:", {
-          lastPeriodStart: enhancedCycleData.lastPeriodStart?.toDateString(),
+        console.log("✅ Enhanced cycle calculation complete:", {
+          lastPeriodStart: freshCycleData.lastPeriodStart?.toDateString(),
+          isCurrentlyOnPeriod: freshCycleData.isCurrentlyOnPeriod,
+          currentPeriodDay: freshCycleData.currentPeriodDay,
           currentPhase: phaseData.phase,
           message: phaseData.message,
           mlAvailable: !!mlPredictions,
-          mlLoading,
           source: mlPredictions
             ? "periodLogs + ML predictions"
-            : "periodLogs + math fallback",
+            : "periodLogs + enhanced calculation",
         });
 
         // Fetch weight data
@@ -238,60 +233,22 @@ const Home = () => {
     initializeData();
   }, [mlPredictions, mlLoading]); // ✅ Re-run when ML predictions change OR loading state changes
 
-  // ✅ ML-ENHANCED: Days to next period calculation (same as CycleOverview)
+  // ✅ ENHANCED: Days to next period calculation with current period awareness
   const getDaysToNextPeriod = (): number => {
-    // ✅ Use ML prediction if available
-    if (mlPredictions?.nextPeriod?.daysUntil !== undefined) {
-      console.log(
-        "🤖 Home using ML prediction for next period:",
-        mlPredictions.nextPeriod.daysUntil
-      );
-      return Math.max(1, mlPredictions.nextPeriod.daysUntil);
-    }
-
-    // Fallback to math calculation
-    if (!realTimeCycleData.lastPeriodStart || !realTimeCycleData.cycleLength)
-      return 0;
-
-    const today = new Date();
-    const periodStartDate =
-      realTimeCycleData.lastPeriodStart instanceof Date
-        ? realTimeCycleData.lastPeriodStart
-        : new Date(realTimeCycleData.lastPeriodStart as string | number | Date);
-
-    const daysSinceStart = Math.floor(
-      (today.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    const currentCycleDay = daysSinceStart + 1;
-
-    const daysUntilNext = Math.max(
-      1,
-      realTimeCycleData.cycleLength - currentCycleDay + 1
-    );
-
-    console.log("📊 Home math calculation fallback:", {
-      currentCycleDay,
-      cycleLength: realTimeCycleData.cycleLength,
-      daysUntilNext,
-    });
-
-    return daysUntilNext;
+    // ✅ Use enhanced calculator function
+    return getDaysUntilNextPeriod(realTimeCycleData, mlPredictions);
   };
 
   // ✅ Calculate consistent days to next period
   const daysToNextPeriod = getDaysToNextPeriod();
 
-  // ✅ Override the phase data with consistent calculation
+  // ✅ Enhanced phase data with proper period handling
   const enhancedPhaseData = {
     ...currentPhaseData,
-    daysLeft:
-      daysToNextPeriod > 0
-        ? `${daysToNextPeriod} days`
-        : currentPhaseData.daysLeft,
-    message:
-      daysToNextPeriod > 0
-        ? `Period in ${daysToNextPeriod} days`
-        : currentPhaseData.message,
+    daysLeft: currentPhaseData.daysLeft || 
+      (realTimeCycleData.isCurrentlyOnPeriod 
+        ? `Day ${realTimeCycleData.currentPeriodDay} of ${realTimeCycleData.periodDuration || 5}`
+        : `${daysToNextPeriod} days`),
   };
 
   const phaseStyle = PHASE_STYLES[enhancedPhaseData.phase];
@@ -302,27 +259,42 @@ const Home = () => {
   // ✅ GET ML-POWERED SMART LOOKOUTS
   const smartLookouts = getMLSmartLookouts();
 
-  // Debug current cycle info with consistent calculations
-  console.log("🤖 ML-Powered Cycle Info:", {
+  // Get current hour for dynamic greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  // Debug current cycle info with enhanced calculations
+  console.log("🤖 Enhanced ML-Powered Cycle Info:", {
     phase: enhancedPhaseData.phase,
     message: enhancedPhaseData.message,
     daysToNext: daysToNextPeriod,
+    isCurrentlyOnPeriod: realTimeCycleData.isCurrentlyOnPeriod,
+    currentPeriodDay: realTimeCycleData.currentPeriodDay,
     mlPredictions: !!mlPredictions,
     smartLookouts,
   });
 
-  // ✅ SHOW LOADING UNTIL ML COMPLETES
+  // ✅ SHOW LOADING UNTIL CYCLE DATA IS CALCULATED
   if (mlLoading || currentPhaseData.message === "Loading...") {
     return (
-      <div className="min-h-screen bg-[#F4F1FA] flex flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-purple-600 font-medium">
-            🤖 Loading AI-powered insights...
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 flex flex-col items-center justify-center">
+        <div className="text-center bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <h3 className="text-xl font-bold text-purple-600 mb-2">
+            🤖 Analyzing Your Cycle
+          </h3>
+          <p className="text-gray-600 font-medium">
+            Our AI is personalizing your insights...
           </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Please wait while we analyze your cycle
-          </p>
+          <div className="mt-4 flex justify-center space-x-1">
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse delay-75"></div>
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-150"></div>
+          </div>
         </div>
       </div>
     );
@@ -333,7 +305,7 @@ const Home = () => {
       {/* Section 1: Greeting & Profile */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-lg font-medium text-purple-800">Good Morning,</p>
+          <p className="text-lg font-medium text-purple-800">{getGreeting()},</p>
           <h1 className="text-2xl font-bold">
             {hasContent(name) ? `${name}!` : "Beautiful!"}
           </h1>

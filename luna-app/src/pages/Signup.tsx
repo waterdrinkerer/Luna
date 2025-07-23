@@ -65,7 +65,7 @@ const Signup = () => {
         profilePic: null, // Use null instead of empty string
       });
 
-      navigate('/date-of-birth');
+     navigate('/privacy-consent');
     } catch (error: unknown) {
       if (error instanceof Error) {
         setErrors((prev) => ({ ...prev, firebase: error.message }));

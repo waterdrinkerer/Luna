@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { doc, setDoc, collection } from "firebase/firestore";
+import { doc, setDoc, collection, getDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { OnboardingContext } from "../context/OnboardingContext";
 
@@ -28,55 +28,50 @@ const ProfilePicChoose = () => {
     const userRef = doc(db, "users", uid);
 
     try {
-      // First, fetch existing user data from Firestore (from signup)
-      const { getDoc } = await import("firebase/firestore");
+      // First, fetch existing user data from Firestore (from signup + consent)
       const existingDoc = await getDoc(userRef);
       const existingData = existingDoc.exists() ? existingDoc.data() : {};
 
-      console.log("📥 Existing user data:", existingData);
+      console.log("📥 Existing user data (with consent):", existingData);
 
-      // ✅ FIXED: User profile data WITHOUT period information
+      // ✅ UPDATED: Include consent data from PrivacyConsent step
       const userData = {
         name: existingData.name || context?.name || null,
-        email:
-          existingData.email ||
-          context?.email ||
-          auth.currentUser.email ||
-          null,
-        dateOfBirth:
-          context?.data.dateOfBirth?.toISOString() ||
-          existingData.dateOfBirth ||
-          null,
-        dob:
-          context?.data.dateOfBirth?.toISOString() || existingData.dob || null,
+        email: existingData.email || context?.email || auth.currentUser.email || null,
+        dateOfBirth: context?.data.dateOfBirth?.toISOString() || existingData.dateOfBirth || null,
+        dob: context?.data.dateOfBirth?.toISOString() || existingData.dob || null,
         cycleLength: context?.data.cycleLength || 28,
         height: context?.data.height || null,
         profilePic: selectedPic,
         hasCompletedOnboarding: true,
         createdAt: existingData.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        // ✅ REMOVED: No period data in user profile anymore
+        
+        // ✅ PRESERVE: Consent data from PrivacyConsent step
+        privacyConsent: existingData.privacyConsent || {
+          dataCollection: true, // Default if somehow missing
+          analytics: false,
+          notifications: false,
+          timestamp: new Date().toISOString()
+        },
+        consentGiven: existingData.consentGiven || true
       };
 
-      console.log("💾 Saving user profile data (no periods):", userData);
+      console.log("💾 Saving complete user profile data (with consent):", userData);
 
-      // Save user profile data (WITHOUT period information)
+      // Save user profile data (including consent)
       await setDoc(userRef, userData, { merge: true });
-      console.log("✅ User profile saved successfully");
+      console.log("✅ User profile saved successfully with consent data");
 
+      // Handle period data if exists
       if (context?.data.lastPeriodStart && context?.data.lastPeriodEnd) {
         const docId = context.data.lastPeriodStart.toISOString().split("T")[0];
-        const periodRef = doc(
-          collection(db, "users", uid, "periodLogs"),
-          docId
-        );
+        const periodRef = doc(collection(db, "users", uid, "periodLogs"), docId);
 
-        const duration =
-          Math.ceil(
-            (context.data.lastPeriodEnd.getTime() -
-              context.data.lastPeriodStart.getTime()) /
-              (1000 * 60 * 60 * 24)
-          ) + 1;
+        const duration = Math.ceil(
+          (context.data.lastPeriodEnd.getTime() - context.data.lastPeriodStart.getTime()) / 
+          (1000 * 60 * 60 * 24)
+        ) + 1;
 
         const onboardingPeriod = {
           startDate: context.data.lastPeriodStart.toISOString(),
@@ -91,10 +86,7 @@ const ProfilePicChoose = () => {
         };
 
         await setDoc(periodRef, onboardingPeriod);
-        console.log(
-          "✅ Onboarding period saved to periodLogs with doc ID:",
-          docId
-        );
+        console.log("✅ Onboarding period saved to periodLogs with doc ID:", docId);
       }
 
       // Update context with the saved data
@@ -103,22 +95,17 @@ const ProfilePicChoose = () => {
       context?.setDob(userData.dateOfBirth || null);
       context?.setProfilePic(selectedPic);
 
-      // ✅ FIXED: Update context.data WITHOUT period fields
+      // Update context.data
       context?.update({
         name: userData.name || undefined,
-        dateOfBirth: userData.dateOfBirth
-          ? new Date(userData.dateOfBirth)
-          : undefined,
+        dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth) : undefined,
         cycleLength: context?.data.cycleLength,
         height: context?.data.height,
-        // ✅ REMOVED: No period data in context after save
       });
 
-      console.log(
-        "✅ Context updated after save (periods moved to periodLogs)"
-      );
+      console.log("✅ Context updated after save (with consent preserved)");
 
-      // Finish onboarding to re-enable Firebase sync
+      // Finish onboarding
       if (context?.finishOnboarding) {
         context.finishOnboarding();
         console.log("✅ Onboarding finished - Firebase sync re-enabled");
@@ -131,38 +118,29 @@ const ProfilePicChoose = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F4FF] p-6 flex flex-col items-center justify-center">
-      <h1 className="text-2xl font-bold mb-6 text-center">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-6 flex flex-col items-center justify-center">
+      <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
         Choose Your Profile Picture
       </h1>
 
-      {/* Debug info */}
-      <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
-        <p>
-          <strong>Name:</strong> {context?.name || "Not set"}
-        </p>
-        <p>
-          <strong>Email:</strong> {context?.email || "Not set"}
-        </p>
-        <p>
-          <strong>DOB:</strong> {context?.dob || "Not set"}
-        </p>
-        <p>
-          <strong>Height:</strong>{" "}
-          {context?.data.height ? `${context.data.height} cm` : "Not set"}
-        </p>
-        <p>
-          <strong>Last Period:</strong>{" "}
-          {context?.data.lastPeriodStart
-            ? `${context.data.lastPeriodStart.toLocaleDateString()} - ${context.data.lastPeriodEnd?.toLocaleDateString()}`
-            : "Not set"}
-        </p>
-        <p>
-          <strong>Storage:</strong> Period → periodLogs, Profile → users
-        </p>
-        <p>
-          <strong>User ID:</strong> {auth.currentUser?.uid || "Not logged in"}
-        </p>
+      {/* Debug info - prettier version */}
+      <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm border text-xs max-w-md w-full">
+        <h3 className="font-semibold text-gray-800 mb-2">Setup Summary:</h3>
+        <div className="space-y-1 text-gray-600">
+          <p><strong>Name:</strong> {context?.name || "Not set"}</p>
+          <p><strong>Email:</strong> {context?.email || "Not set"}</p>
+          <p><strong>DOB:</strong> {context?.dob || "Not set"}</p>
+          <p><strong>Height:</strong> {context?.data.height ? `${context.data.height} cm` : "Not set"}</p>
+          <p><strong>Last Period:</strong> {
+            context?.data.lastPeriodStart
+              ? `${context.data.lastPeriodStart.toLocaleDateString()} - ${context.data.lastPeriodEnd?.toLocaleDateString()}`
+              : "Not set"
+          }</p>
+          <p><strong>User ID:</strong> {auth.currentUser?.uid || "Not logged in"}</p>
+        </div>
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <p className="text-green-600 text-xs">✅ Privacy consent will be preserved</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -174,8 +152,8 @@ const ProfilePicChoose = () => {
             onClick={() => setSelectedPic(pic)}
             className={`w-24 h-24 rounded-full object-cover border-4 cursor-pointer transition duration-200 ${
               selectedPic === pic
-                ? "border-purple-500 scale-105"
-                : "border-transparent"
+                ? "border-purple-500 scale-105 shadow-lg"
+                : "border-gray-200 hover:border-purple-300"
             }`}
           />
         ))}
@@ -184,8 +162,10 @@ const ProfilePicChoose = () => {
       <button
         disabled={!selectedPic}
         onClick={handleContinue}
-        className={`w-full max-w-xs bg-purple-600 text-white py-3 rounded-full font-semibold transition ${
-          selectedPic ? "opacity-100" : "opacity-50 cursor-not-allowed"
+        className={`w-full max-w-xs py-3 rounded-2xl font-semibold transition ${
+          selectedPic 
+            ? "bg-purple-500 hover:bg-purple-600 text-white" 
+            : "bg-gray-200 text-gray-500 cursor-not-allowed"
         }`}
       >
         Complete Setup

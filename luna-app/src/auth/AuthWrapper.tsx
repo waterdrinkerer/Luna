@@ -6,19 +6,12 @@ import { db } from "../firebase";
 import type { ReactElement } from "react";
 
 const onboardingRoutes = [
+  "/privacy-consent",
   "/date-of-birth",
-  "/height", // Add this if it's missing
+  "/height",
   "/last-period",
   "/cycle-length",
   "/profile-pic",
-];
-
-const publicRoutes = [
-  "/",
-  "/welcome", // Add this if it's missing
-  "/login",
-  "/signup",
-  ...onboardingRoutes,
 ];
 
 const AuthWrapper = ({ children }: { children: ReactElement }) => {
@@ -40,13 +33,13 @@ const AuthWrapper = ({ children }: { children: ReactElement }) => {
           const hasCompletedOnboarding = userData?.hasCompletedOnboarding === true;
 
           if (!hasCompletedOnboarding) {
-            // User hasn't completed onboarding
+            // User hasn't completed onboarding - redirect to onboarding
             if (!onboardingRoutes.includes(path)) {
-              navigate("/date-of-birth", { replace: true });
+              navigate("/privacy-consent", { replace: true });
             }
           } else {
-            // User has completed onboarding
-            if (publicRoutes.includes(path)) {
+            // User has completed onboarding - redirect away from onboarding
+            if (onboardingRoutes.includes(path)) {
               navigate("/home", { replace: true });
             }
           }
@@ -54,14 +47,12 @@ const AuthWrapper = ({ children }: { children: ReactElement }) => {
           console.error("Error checking user onboarding status:", error);
           // If there's an error, assume they need to complete onboarding
           if (!onboardingRoutes.includes(path)) {
-            navigate("/date-of-birth", { replace: true });
+            navigate("/privacy-consent", { replace: true });
           }
         }
       } else {
-        // User is not logged in
-        if (!publicRoutes.includes(path)) {
-          navigate("/welcome", { replace: true });
-        }
+        // User is not logged in - redirect to welcome
+        navigate("/welcome", { replace: true });
       }
 
       setLoading(false);

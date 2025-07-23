@@ -10,7 +10,9 @@ const Profile = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
 
-  const [profilePic, setProfilePic] = useState("/assets/profile-placeholder.jpg");
+  const [profilePic, setProfilePic] = useState(
+    "/assets/profile-placeholder.jpg"
+  );
   const [name, setName] = useState("Loading...");
   const [email, setEmail] = useState("Loading...");
   const [dob, setDob] = useState("Loading...");
@@ -21,7 +23,7 @@ const Profile = () => {
     contextName: context?.name,
     contextEmail: context?.email,
     contextDob: context?.dob,
-    contextProfilePic: context?.profilePic
+    contextProfilePic: context?.profilePic,
   });
 
   useEffect(() => {
@@ -43,16 +45,23 @@ const Profile = () => {
         if (userSnap.exists()) {
           const data = userSnap.data();
           console.log("📥 Raw Firestore data:", data);
-          
+
           // Updated: Handle null/empty values properly - display "Not set" for null/undefined/empty values
-          const userName = (data.name && data.name.trim() !== "") ? data.name : "Not set";
-          const userEmail = (data.email && data.email.trim() !== "") ? data.email : (user.email || "Not set");
-          
+          const userName =
+            data.name && data.name.trim() !== "" ? data.name : "Not set";
+          const userEmail =
+            data.email && data.email.trim() !== ""
+              ? data.email
+              : user.email || "Not set";
+
           // Handle both dateOfBirth and dob fields with proper date formatting
           const dobFromFirestore = data.dob || data.dateOfBirth;
-          const formattedDob = dobFromFirestore ? new Date(dobFromFirestore).toLocaleDateString() : "Not set";
-          
-          const userProfilePic = data.profilePic || "/assets/profile-placeholder.jpg";
+          const formattedDob = dobFromFirestore
+            ? new Date(dobFromFirestore).toLocaleDateString()
+            : "Not set";
+
+          const userProfilePic =
+            data.profilePic || "/assets/profile-placeholder.jpg";
 
           setName(userName);
           setEmail(userEmail);
@@ -63,12 +72,18 @@ const Profile = () => {
             name: userName,
             email: userEmail,
             dob: formattedDob,
-            profilePic: userProfilePic
+            profilePic: userProfilePic,
           });
 
           // Updated: Sync to context - use actual values or null for empty strings
-          context?.setName((data.name && data.name.trim() !== "") ? data.name : null);
-          context?.setEmail((data.email && data.email.trim() !== "") ? data.email : (user.email || null));
+          context?.setName(
+            data.name && data.name.trim() !== "" ? data.name : null
+          );
+          context?.setEmail(
+            data.email && data.email.trim() !== ""
+              ? data.email
+              : user.email || null
+          );
           context?.setDob(dobFromFirestore || null);
           context?.setProfilePic(userProfilePic);
         } else {
@@ -114,55 +129,295 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F4FF] px-5 pt-6 pb-20">
-      {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 text-sm text-[#7E5FFF] font-medium flex items-center space-x-1"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        <span>Back</span>
-      </button>
-
-      <h1 className="text-xl font-bold mb-6">My Profile</h1>
-      
-      <div className="flex flex-col items-center gap-3 mb-6">
-        <img
-          src={profilePic}
-          alt="Profile"
-          className="w-24 h-24 rounded-full object-cover border"
-        />
-        <button
-          onClick={() => setShowModal(true)}
-          className="text-sm text-[#7E5FFF] font-medium"
-        >
-          Change Photo
-        </button>
-      </div>
-
-      <div className="bg-white p-4 rounded-xl shadow space-y-4 mb-4">
-        <div>
-          <p className="text-xs text-gray-500">Name</p>
-          <p className="text-sm font-medium text-gray-800">{name}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">Email</p>
-          <p className="text-sm font-medium text-gray-800">{email}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">Date of Birth</p>
-          <p className="text-sm font-medium text-gray-800">{dob}</p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+      {/* Enhanced Header */}
+      <div className="bg-gradient-to-r from-purple-400 to-pink-400 rounded-b-3xl shadow-lg">
+        <div className="px-6 pt-8 pb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
+            >
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-white">My Profile</h1>
+              <p className="text-white/80 text-sm">
+                Manage your account and privacy
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <button
-        onClick={handleLogout}
-        className="w-full py-3 bg-red-500 text-white font-semibold rounded-full"
-      >
-        Log out
-      </button>
+      {/* Content */}
+      <div className="px-6 py-6 -mt-4 space-y-6">
+        {/* Profile Picture Section */}
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <img
+                src={profilePic}
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 shadow-lg"
+              />
+              <div
+                className="absolute -bottom-2 -right-2 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-purple-600 transition-colors"
+                onClick={() => setShowModal(true)}
+              >
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowModal(true)}
+              className="text-sm text-purple-600 font-medium hover:text-purple-800 transition-colors"
+            >
+              Change Photo
+            </button>
+          </div>
+        </div>
+
+        {/* Profile Information */}
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-blue-500">👤</span>
+            Personal Information
+          </h2>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-2xl">
+              <p className="text-xs text-blue-600 font-medium mb-1">Name</p>
+              <p className="text-sm font-semibold text-blue-800">{name}</p>
+            </div>
+            <div className="p-4 bg-green-50 rounded-2xl">
+              <p className="text-xs text-green-600 font-medium mb-1">Email</p>
+              <p className="text-sm font-semibold text-green-800">{email}</p>
+            </div>
+            <div className="p-4 bg-purple-50 rounded-2xl">
+              <p className="text-xs text-purple-600 font-medium mb-1">
+                Date of Birth
+              </p>
+              <p className="text-sm font-semibold text-purple-800">{dob}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ✅ NEW: Privacy & Legal Section */}
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-purple-500">🛡️</span>
+            Privacy & Legal
+          </h2>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate("/privacy-policy")}
+              className="w-full flex items-center justify-between p-4 bg-purple-50 hover:bg-purple-100 rounded-2xl transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-200 rounded-xl flex items-center justify-center">
+                  <span className="text-purple-600">📜</span>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-purple-800">
+                    Privacy Policy
+                  </p>
+                  <p className="text-sm text-purple-600">
+                    How we protect your data
+                  </p>
+                </div>
+              </div>
+              <svg
+                className="w-5 h-5 text-purple-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+
+            <button
+              onClick={() => navigate("/privacy-settings")}
+              className="w-full flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-200 rounded-xl flex items-center justify-center">
+                  <span className="text-blue-600">⚙️</span>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-blue-800">
+                    Privacy Settings
+                  </p>
+                  <p className="text-sm text-blue-600">
+                    Manage your data preferences
+                  </p>
+                </div>
+              </div>
+              <svg
+                className="w-5 h-5 text-blue-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+
+            <div className="p-4 bg-gray-50 rounded-2xl">
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                <span>🔐</span>
+                <span>Your data is encrypted and secure</span>
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-1">
+                GDPR & CCPA Compliant
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* About the Developer */}
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-orange-500">👨‍💻</span>
+            About the Developer
+          </h2>
+
+          <div className="space-y-4">
+            {/* School Logos */}
+            <div className="flex items-center justify-center gap-4 p-4 bg-gray-50 rounded-2xl">
+              <img
+                src="/assets/sunwaylogo.png"
+                alt="School Logo 1"
+                className="h-12 w-auto object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  if (e.currentTarget.nextElementSibling) {
+                    (
+                      e.currentTarget.nextElementSibling as HTMLElement
+                    ).style.display = "flex";
+                  }
+                }}
+              />
+              <div className="hidden w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">
+                Logo 1
+              </div>
+
+              <div className="w-px h-8 bg-gray-300"></div>
+
+              <img
+                src="/assets/lancasterlogo.png"
+                alt="School Logo 2"
+                className="h-12 w-auto object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  if (e.currentTarget.nextElementSibling) {
+                    (
+                      e.currentTarget.nextElementSibling as HTMLElement
+                    ).style.display = "flex";
+                  }
+                }}
+              />
+              <div className="hidden w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">
+                Logo 2
+              </div>
+            </div>
+
+            {/* Developer Info */}
+            <div className="p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl">
+              <h3 className="font-semibold text-orange-800 mb-2">
+                Hey!
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                I’m Hwei Hsin, the developer behind Luna. This app was
+                created as part of my Final Year Project at Sunway University,
+                with the goal of helping people track their cycles, learn about
+                their bodies, and feel supported every month. 🌙✨
+              </p>
+              <div className="flex items-center gap-2 text-sm text-orange-600">
+                
+              </div>
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={() => navigate("/about-me")}
+                className="w-full flex items-center justify-center gap-2 p-4 bg-orange-50 hover:bg-orange-100 rounded-2xl transition-colors border border-orange-200"
+              >
+                <span className="text-orange-500">📖</span>
+                <span className="font-semibold text-orange-700">
+                  View Full About Page
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  // You can add navigation to a feedback form or contact page later
+                  alert(
+                    "Feature coming soon! You can add a feedback form or contact page here."
+                  );
+                }}
+                className="w-full flex items-center justify-center gap-2 p-3 bg-yellow-50 hover:bg-yellow-100 rounded-2xl transition-colors border border-yellow-200"
+              >
+                <span className="text-yellow-500">💬</span>
+                <span className="font-medium text-yellow-700">
+                  Send Feedback
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Actions */}
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-red-500">🚪</span>
+            Account Actions
+          </h2>
+
+          <button
+            onClick={handleLogout}
+            className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-2xl transition-colors"
+          >
+            Log out
+          </button>
+        </div>
+      </div>
 
       {/* Modal */}
       <ProfilePicModal

@@ -1,4 +1,3 @@
-
 import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -187,24 +186,33 @@ class LunaMLService {
   }
 
   // ==========================================
-  // CALL YOUR ML API
+  // CALL YOUR ML API - IMPROVED VERSION
   // ==========================================
   
   async getPredictions(userId: string): Promise<MLPredictions> {
     try {
       const features = await this.extractUserFeatures(userId);
       
-      // Call your actual ML API endpoints
-      const [nextPeriodResponse, irregularResponse, symptomsResponse] = await Promise.all([
+      // ✅ Call APIs with individual error handling using Promise.allSettled
+      const [nextPeriodResponse, irregularResponse, symptomsResponse] = await Promise.allSettled([
         this.callNextPeriodAPI(features),
         this.callIrregularCycleAPI(features),
         this.callSymptomsAPI(features)
       ]);
 
       return {
-        nextPeriod: nextPeriodResponse,
-        cycleHealth: irregularResponse,
-        dailySymptoms: symptomsResponse,
+        nextPeriod: nextPeriodResponse.status === 'fulfilled' 
+          ? nextPeriodResponse.value 
+          : this.getNextPeriodFallback(features),
+        
+        cycleHealth: irregularResponse.status === 'fulfilled'
+          ? irregularResponse.value
+          : this.getIrregularCycleFallback(features),
+        
+        dailySymptoms: symptomsResponse.status === 'fulfilled'
+          ? symptomsResponse.value
+          : this.getSymptomsFallback(features),
+          
         confidence: this.calculateConfidence(features)
       };
 
@@ -215,7 +223,7 @@ class LunaMLService {
   }
 
   // ==========================================
-  // API CALL METHODS
+  // API CALL METHODS - IMPROVED
   // ==========================================
 
   private async callNextPeriodAPI(features: UserCycleFeatures) {
@@ -235,6 +243,11 @@ class LunaMLService {
         })
       });
 
+      if (!response.ok) {
+        console.warn(`Next period API returned ${response.status}. Using fallback.`);
+        return this.getNextPeriodFallback(features);
+      }
+
       const data = await response.json();
       
       const nextDate = new Date();
@@ -247,24 +260,25 @@ class LunaMLService {
         explanation: data.explanation
       };
     } catch (error) {
-      console.error('Next period API error:', error);
-      
-      // ✅ FIXED: Better fallback calculation for past periods
-      const lastPeriodEndDate = new Date(Date.now() - (features.daysSinceLastPeriod * 24 * 60 * 60 * 1000));
-      const nextPeriodDate = new Date(lastPeriodEndDate.getTime() + (features.meanCycleLength * 24 * 60 * 60 * 1000));
-      const daysUntilNext = Math.ceil((nextPeriodDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      
-      return {
-        daysUntil: Math.max(1, daysUntilNext), // Never negative
-        date: nextPeriodDate,
-        confidence: 'low' as const,
-        explanation: `Based on your ${features.meanCycleLength}-day average cycle, your next period is expected in ${Math.max(1, daysUntilNext)} days`
-      };
+      console.warn('Next period API temporarily unavailable:', error.message);
+      return this.getNextPeriodFallback(features);
     }
   }
 
   private async callIrregularCycleAPI(features: UserCycleFeatures) {
     try {
+      // ✅ Check if we have enough data before making the API call
+      if (features.recentCycleLengths.length < 2) {
+        console.log('⚠️ Insufficient cycle data for irregular cycle detection');
+        return {
+          isIrregular: false,
+          riskLevel: 'low' as const,
+          pcosRisk: 0,
+          warnings: ['More cycle data needed for accurate irregularity detection'],
+          recommendations: ['Log at least 3 complete cycles for personalized health insights']
+        };
+      }
+
       const response = await fetch(`${this.ML_API_URL}/detect/irregular-cycle`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -281,6 +295,12 @@ class LunaMLService {
         })
       });
 
+      // ✅ Handle non-200 responses gracefully
+      if (!response.ok) {
+        console.warn(`Irregular cycle API returned ${response.status}. Using fallback.`);
+        return this.getIrregularCycleFallback(features);
+      }
+
       const data = await response.json();
 
       return {
@@ -291,14 +311,8 @@ class LunaMLService {
         recommendations: data.recommendations || []
       };
     } catch (error) {
-      console.error('Irregular cycle API error:', error);
-      return {
-        isIrregular: false,
-        riskLevel: 'low' as const,
-        pcosRisk: 0,
-        warnings: [],
-        recommendations: []
-      };
+      console.warn('Irregular cycle API temporarily unavailable:', error.message);
+      return this.getIrregularCycleFallback(features);
     }
   }
 
@@ -317,6 +331,11 @@ class LunaMLService {
           mean_bleeding_intensity: 5
         })
       });
+
+      if (!response.ok) {
+        console.warn(`Symptoms API returned ${response.status}. Using fallback.`);
+        return this.getSymptomsFallback(features);
+      }
 
       const data = await response.json();
 
@@ -337,23 +356,69 @@ class LunaMLService {
         topSymptoms: symptoms.slice(0, 2)
       };
     } catch (error) {
-      console.error('Symptoms API error:', error);
-      return {
-        crampIntensity: 2,
-        flowIntensity: 0,
-        fatigueLevel: 3,
-        moodImpact: 2,
-        overallDiscomfort: 2,
-        descriptions: {
-          cramps: 'Mild',
-          flow: 'None to minimal',
-          fatigue: 'Mild',
-          mood: 'None to minimal',
-          overall: 'Mild'
-        },
-        topSymptoms: []
-      };
+      console.warn('Symptoms API temporarily unavailable:', error.message);
+      return this.getSymptomsFallback(features);
     }
+  }
+
+  // ==========================================
+  // ✅ NEW FALLBACK METHODS
+  // ==========================================
+
+  private getIrregularCycleFallback(features: UserCycleFeatures) {
+    // Provide basic irregularity detection based on cycle length variation
+    const isIrregular = features.recentCycleLengths.length >= 2 && 
+                       this.standardDeviation(features.recentCycleLengths) > 7;
+    
+    return {
+      isIrregular,
+      riskLevel: isIrregular ? 'medium' as const : 'low' as const,
+      pcosRisk: 0,
+      warnings: isIrregular ? ['Cycle length variation detected'] : [],
+      recommendations: [
+        'Continue tracking your cycles for more accurate health insights',
+        ...(features.periodsLogged < 6 ? ['Log more periods to improve prediction accuracy'] : [])
+      ]
+    };
+  }
+
+  private getNextPeriodFallback(features: UserCycleFeatures) {
+    const lastPeriodEndDate = new Date(Date.now() - (features.daysSinceLastPeriod * 24 * 60 * 60 * 1000));
+    const nextPeriodDate = new Date(lastPeriodEndDate.getTime() + (features.meanCycleLength * 24 * 60 * 60 * 1000));
+    const daysUntilNext = Math.ceil((nextPeriodDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    
+    return {
+      daysUntil: Math.max(1, daysUntilNext),
+      date: nextPeriodDate,
+      confidence: 'low' as const,
+      explanation: `Based on your ${features.meanCycleLength}-day average cycle, your next period is expected in ${Math.max(1, daysUntilNext)} days`
+    };
+  }
+
+  private getSymptomsFallback(features: UserCycleFeatures) {
+    // Basic symptom prediction based on cycle day
+    const crampIntensity = features.currentCycleDay <= 3 ? 4 : 
+                          features.currentCycleDay <= 7 ? 2 : 1;
+    const flowIntensity = features.currentCycleDay <= 5 ? 3 : 0;
+    
+    return {
+      crampIntensity,
+      flowIntensity,
+      fatigueLevel: 2,
+      moodImpact: 2,
+      overallDiscomfort: Math.max(crampIntensity, 2),
+      descriptions: {
+        cramps: crampIntensity > 3 ? 'Moderate' : crampIntensity > 1 ? 'Mild' : 'None',
+        flow: flowIntensity > 2 ? 'Moderate' : flowIntensity > 0 ? 'Light' : 'None',
+        fatigue: 'Mild',
+        mood: 'Stable',
+        overall: crampIntensity > 3 ? 'Moderate discomfort' : 'Mild discomfort'
+      },
+      topSymptoms: [
+        { name: 'cramps', intensity: crampIntensity, description: 'Based on cycle day' },
+        { name: 'flow', intensity: flowIntensity, description: 'Estimated for cycle day' }
+      ].filter(s => s.intensity > 0)
+    };
   }
 
   // ==========================================

@@ -1,5 +1,6 @@
 // src/utils/cycleCalculator.ts
 // 🎯 SINGLE SOURCE OF TRUTH - Only uses periodLogs collection
+// ✅ FIXED: Proper phase messages that match the phase type
 
 import {
   collection,
@@ -15,6 +16,10 @@ export interface CycleData {
   lastPeriodEnd?: Date;
   cycleLength?: number;
   calculatedCycleLength?: number | null;
+  // ✅ NEW: Current period detection
+  isCurrentlyOnPeriod?: boolean;
+  currentPeriodDay?: number;
+  periodDuration?: number;
 }
 
 export interface CyclePhase {
@@ -30,6 +35,9 @@ export interface CyclePhase {
   subtext: string;
   daysLeft?: string;
   dayNumber?: number;
+  // ✅ NEW: Period tracking info
+  isOnPeriod?: boolean;
+  periodDay?: number;
 }
 
 // Default values
@@ -80,7 +88,55 @@ const calculateCycleLengthFromPeriods = (periods: Array<{ startDate: any }>): nu
   return average;
 };
 
-// ✅ UNIFIED: Get cycle data from periodLogs ONLY
+// ✅ ENHANCED: Detect if currently on period
+const detectCurrentPeriod = (periods: Array<any>): { isOnPeriod: boolean; periodDay?: number; duration?: number } => {
+  if (periods.length === 0) {
+    return { isOnPeriod: false };
+  }
+
+  const today = new Date();
+  const latestPeriod = periods[0];
+  
+  const startDate = safeDate(latestPeriod.startDate);
+  if (!startDate) {
+    return { isOnPeriod: false };
+  }
+
+  const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const currentPeriodDay = daysSinceStart + 1;
+
+  // Check if we have an explicit end date
+  const endDate = safeDate(latestPeriod.endDate);
+  const periodDuration = latestPeriod.duration || DEFAULT_PERIOD_LENGTH;
+
+  let isOnPeriod = false;
+
+  if (endDate) {
+    // Use explicit end date
+    isOnPeriod = today <= endDate && currentPeriodDay >= 1;
+    console.log('📅 Using explicit end date for period detection:', {
+      today: today.toDateString(),
+      endDate: endDate.toDateString(),
+      isOnPeriod
+    });
+  } else {
+    // Use duration
+    isOnPeriod = currentPeriodDay >= 1 && currentPeriodDay <= periodDuration;
+    console.log('📅 Using duration for period detection:', {
+      currentPeriodDay,
+      periodDuration,
+      isOnPeriod
+    });
+  }
+
+  return {
+    isOnPeriod,
+    periodDay: isOnPeriod ? currentPeriodDay : undefined,
+    duration: periodDuration
+  };
+};
+
+// ✅ ENHANCED: Get cycle data with current period detection
 export const getMostRecentCycleData = async (userId: string): Promise<CycleData> => {
   if (!userId) {
     console.log('❌ No user ID provided');
@@ -88,7 +144,7 @@ export const getMostRecentCycleData = async (userId: string): Promise<CycleData>
   }
 
   try {
-    console.log('🔄 Loading cycle data from periodLogs for user:', userId);
+    console.log('🔄 Loading enhanced cycle data from periodLogs for user:', userId);
 
     // Get periods from periodLogs collection ONLY
     const periodLogsRef = collection(db, "users", userId, "periodLogs");
@@ -100,7 +156,7 @@ export const getMostRecentCycleData = async (userId: string): Promise<CycleData>
       return {
         id: doc.id,
         startDate: data.startDate,
-        endDate: data.endDate,
+        endDate: data.endDatea,
         duration: data.duration || 5,
         ...data,
       };
@@ -110,7 +166,10 @@ export const getMostRecentCycleData = async (userId: string): Promise<CycleData>
 
     if (periods.length === 0) {
       console.log('📊 No periods found, returning default values');
-      return { cycleLength: DEFAULT_CYCLE_LENGTH };
+      return { 
+        cycleLength: DEFAULT_CYCLE_LENGTH,
+        isCurrentlyOnPeriod: false
+      };
     }
 
     // Use most recent period
@@ -120,8 +179,14 @@ export const getMostRecentCycleData = async (userId: string): Promise<CycleData>
 
     if (!startDate) {
       console.log('❌ Invalid start date in most recent period');
-      return { cycleLength: DEFAULT_CYCLE_LENGTH };
+      return { 
+        cycleLength: DEFAULT_CYCLE_LENGTH,
+        isCurrentlyOnPeriod: false
+      };
     }
+
+    // ✅ CRITICAL: Detect current period status
+    const currentPeriodInfo = detectCurrentPeriod(periods);
 
     // Calculate cycle length from multiple periods
     const calculatedCycleLength = calculateCycleLengthFromPeriods(periods);
@@ -131,13 +196,20 @@ export const getMostRecentCycleData = async (userId: string): Promise<CycleData>
       lastPeriodStart: startDate,
       lastPeriodEnd: endDate || new Date(startDate.getTime() + 5 * 24 * 60 * 60 * 1000),
       cycleLength: finalCycleLength,
-      calculatedCycleLength: calculatedCycleLength
+      calculatedCycleLength: calculatedCycleLength,
+      // ✅ NEW: Current period detection
+      isCurrentlyOnPeriod: currentPeriodInfo.isOnPeriod,
+      currentPeriodDay: currentPeriodInfo.periodDay,
+      periodDuration: currentPeriodInfo.duration
     };
 
-    console.log('✅ Final cycle data:', {
+    console.log('✅ Enhanced cycle data with period detection:', {
       lastPeriodStart: result.lastPeriodStart?.toDateString(),
       lastPeriodEnd: result.lastPeriodEnd?.toDateString(),
       cycleLength: result.cycleLength,
+      isCurrentlyOnPeriod: result.isCurrentlyOnPeriod,
+      currentPeriodDay: result.currentPeriodDay,
+      periodDuration: result.periodDuration,
       periodsFound: periods.length
     });
 
@@ -145,11 +217,14 @@ export const getMostRecentCycleData = async (userId: string): Promise<CycleData>
 
   } catch (error) {
     console.error("❌ Error fetching cycle data:", error);
-    return { cycleLength: DEFAULT_CYCLE_LENGTH };
+    return { 
+      cycleLength: DEFAULT_CYCLE_LENGTH,
+      isCurrentlyOnPeriod: false
+    };
   }
 };
 
-// ✅ Calculate current cycle phase
+// ✅ FIXED: Calculate current cycle phase with PROPER MESSAGES
 export const calculateCurrentCyclePhase = (cycleData: CycleData): CyclePhase => {
   const today = new Date();
   const cycleLength = cycleData.cycleLength || DEFAULT_CYCLE_LENGTH;
@@ -160,13 +235,29 @@ export const calculateCurrentCyclePhase = (cycleData: CycleData): CyclePhase => 
   if (!lastPeriodStart) {
     return {
       phase: "countdown",
-      message: "Period in",
-      subtext: "Track your periods for accurate predictions",
+      message: "Track your periods",
+      subtext: "Start logging for accurate predictions",
       daysLeft: "Unknown",
+      isOnPeriod: false
     };
   }
 
-  // Calculate current cycle day
+  // ✅ CRITICAL: Check if currently on period FIRST
+  if (cycleData.isCurrentlyOnPeriod && cycleData.currentPeriodDay) {
+    console.log('🩸 Currently on period - day', cycleData.currentPeriodDay);
+    
+    return {
+      phase: "period",
+      message: `Period Day ${cycleData.currentPeriodDay}`,
+      subtext: "Don't forget to log your flow",
+      dayNumber: cycleData.currentPeriodDay,
+      daysLeft: `Day ${cycleData.currentPeriodDay}`,
+      isOnPeriod: true,
+      periodDay: cycleData.currentPeriodDay
+    };
+  }
+
+  // ✅ Period is over - calculate normal cycle phases
   const daysSinceLastPeriod = Math.floor((today.getTime() - lastPeriodStart.getTime()) / (1000 * 60 * 60 * 24));
   let currentCycleDay = daysSinceLastPeriod + 1;
 
@@ -177,7 +268,7 @@ export const calculateCurrentCyclePhase = (cycleData: CycleData): CyclePhase => 
   }
 
   // Calculate period length
-  let periodLength = DEFAULT_PERIOD_LENGTH;
+  let periodLength = cycleData.periodDuration || DEFAULT_PERIOD_LENGTH;
   if (lastPeriodEnd) {
     periodLength = Math.ceil((lastPeriodEnd.getTime() - lastPeriodStart.getTime()) / (1000 * 60 * 60 * 24));
   }
@@ -188,90 +279,133 @@ export const calculateCurrentCyclePhase = (cycleData: CycleData): CyclePhase => 
   const fertileEnd = ovulationDay + 1;
   const pmsStart = cycleLength - 5;
 
-  console.log('🔍 Cycle Debug:', {
+  // Calculate days until next period
+  const daysUntilNextPeriod = Math.max(1, cycleLength - currentCycleDay + 1);
+
+  console.log('🔍 Enhanced Cycle Debug:', {
     currentCycleDay,
     cycleLength,
     periodLength,
     ovulationDay,
+    fertileStart,
+    fertileEnd,
+    pmsStart,
+    daysUntilNextPeriod,
+    isCurrentlyOnPeriod: cycleData.isCurrentlyOnPeriod,
     phase: "calculating..."
   });
 
-  // Determine phase
-  if (currentCycleDay <= periodLength) {
-    return {
-      phase: "period",
-      message: `Day ${currentCycleDay}`,
-      subtext: "Don't forget to log your flow",
-      dayNumber: currentCycleDay,
-    };
-  }
-
-  if (currentCycleDay < fertileStart) {
+  // ✅ FIXED: Proper phase messages that match the phase type
+  
+  // Follicular Phase (just after period)
+  if (currentCycleDay <= periodLength + 7) {
     return {
       phase: "follicular",
       message: "Follicular Phase",
       subtext: "You might feel more energetic",
+      daysLeft: "Looking Good!",
+      isOnPeriod: false
     };
   }
 
+  // Fertile Window
   if (currentCycleDay >= fertileStart && currentCycleDay <= fertileEnd) {
     return {
       phase: "fertile",
-      message: `Fertile Day ${currentCycleDay - fertileStart + 1}`,
+      message: "Fertile Window",
       subtext: "High chance to get pregnant",
+      daysLeft: "High fertility",
+      isOnPeriod: false
     };
   }
 
+  // Ovulation Day
   if (currentCycleDay === ovulationDay) {
     return {
       phase: "ovulation",
-      message: "Ovulation Day",
-      subtext: "Peak fertility",
+      message: "Ovulation Day", // ✅ FIXED: Shows "Ovulation Day" not countdown
+      subtext: "Peak fertility - highest chance to conceive",
+      daysLeft: "Peak fertility",
+      isOnPeriod: false
     };
   }
 
+  // Luteal Phase
   if (currentCycleDay < pmsStart) {
     return {
       phase: "luteal",
       message: "Luteal Phase",
       subtext: "Your body is preparing for the next cycle",
+      daysLeft: "Body preparing",
+      isOnPeriod: false
     };
   }
 
-  // PMS phase with countdown
-  const daysUntilNextPeriod = cycleLength - currentCycleDay + 1;
-  
-  if (daysUntilNextPeriod <= 0) {
+  // PMS Phase (close to period)
+  if (daysUntilNextPeriod > 3) {
     return {
-      phase: "countdown",
-      message: "Period Expected",
-      subtext: "Your period should start any day now",
-      daysLeft: "Today",
+      phase: "pms",
+      message: "PMS Phase",
+      subtext: "You may experience PMS symptoms",
+      daysLeft: "Stay strong!",
+      isOnPeriod: false
     };
   }
 
+  // Countdown (2-3 days before period)
+  if (daysUntilNextPeriod <= 3 && daysUntilNextPeriod > 0) {
+    return {
+      phase: "countdown", 
+      message: `Period in ${daysUntilNextPeriod} day${daysUntilNextPeriod > 1 ? "s" : ""}`,
+      subtext: "Your period is coming soon",
+      daysLeft: `${daysUntilNextPeriod} day${daysUntilNextPeriod > 1 ? "s" : ""}`,
+      isOnPeriod: false
+    };
+  }
+
+  // Period expected (overdue)
   return {
-    phase: "pms",
-    message: `Period in ${daysUntilNextPeriod} day${daysUntilNextPeriod > 1 ? "s" : ""}`,
-    subtext: "You may experience PMS symptoms",
-    daysLeft: `${daysUntilNextPeriod} Day${daysUntilNextPeriod > 1 ? "s" : ""}`,
+    phase: "countdown",
+    message: "Period Expected",
+    subtext: "Your period should start any day now",
+    daysLeft: "Any day now",
+    isOnPeriod: false
   };
 };
 
-// ✅ Get next period date
+// ✅ Enhanced: Get days until next period with current period awareness
+export const getDaysUntilNextPeriod = (cycleData: CycleData, mlPredictions?: any): number => {
+  // If currently on period, next period is ~28 days away
+  if (cycleData.isCurrentlyOnPeriod) {
+    return cycleData.cycleLength || DEFAULT_CYCLE_LENGTH;
+  }
+
+  // Use ML prediction if available
+  if (mlPredictions?.nextPeriod?.daysUntil !== undefined) {
+    return Math.max(1, mlPredictions.nextPeriod.daysUntil);
+  }
+
+  // Manual calculation
+  const lastPeriodStart = safeDate(cycleData.lastPeriodStart);
+  if (!lastPeriodStart) {
+    return cycleData.cycleLength || DEFAULT_CYCLE_LENGTH;
+  }
+
+  const today = new Date();
+  const daysSinceStart = Math.floor(
+    (today.getTime() - lastPeriodStart.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const currentCycleDay = daysSinceStart + 1;
+  const cycleLength = cycleData.cycleLength || DEFAULT_CYCLE_LENGTH;
+  
+  return Math.max(1, cycleLength - currentCycleDay + 1);
+};
+
+// Keep existing functions for compatibility
 export const getNextPeriodDate = (cycleData: CycleData): Date | null => {
   const lastPeriodStart = safeDate(cycleData.lastPeriodStart);
   if (!lastPeriodStart) return null;
 
   const cycleLength = cycleData.cycleLength || DEFAULT_CYCLE_LENGTH;
   return new Date(lastPeriodStart.getTime() + cycleLength * 24 * 60 * 60 * 1000);
-};
-
-// ✅ Get days until next period
-export const getDaysUntilNextPeriod = (cycleData: CycleData): number | null => {
-  const nextPeriodDate = getNextPeriodDate(cycleData);
-  if (!nextPeriodDate) return null;
-
-  const today = new Date();
-  return Math.ceil((nextPeriodDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 };
