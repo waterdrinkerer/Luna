@@ -35,7 +35,6 @@ const CycleOverview = () => {
           // Use ML-predicted cycle length if available
           if (mlPredictions.nextPeriod?.date) {
             const today = new Date();
-            const mlNextPeriodDate = new Date(mlPredictions.nextPeriod.date);
             const daysSinceLastPeriod = freshData.lastPeriodStart ? 
               Math.floor((today.getTime() - new Date(freshData.lastPeriodStart).getTime()) / (1000 * 60 * 60 * 24)) : 0;
             
@@ -75,7 +74,7 @@ const CycleOverview = () => {
   
   // ✅ Get cycle data safely
   const lastPeriodStart = realTimeCycleData.lastPeriodStart;
-  const lastPeriodEnd = realTimeCycleData.lastPeriodEnd;
+  // const lastPeriodEnd = realTimeCycleData.lastPeriodEnd;
   const cycleLength = realTimeCycleData.cycleLength || 28;
   
   // ✅ Current cycle day calculation
@@ -275,10 +274,10 @@ const CycleOverview = () => {
         </div>
 
         {/* Debug Info */}
-        <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
+        {/* <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
           <p><strong>Debug:</strong> Phase: {currentPhaseData.phase}, Cycle Day: {currentCycleDay}/{cycleLength}, Days to Next: {daysToNextPeriod}</p>
           <p><strong>ML:</strong> {mlPredictions ? `Active (${mlPredictions.nextPeriod?.daysUntil} days predicted)` : 'Not available'}</p>
-        </div>
+        </div> */}
 
         {/* Main Cycle Info Card */}
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl p-6 shadow-xl mb-6 text-white">

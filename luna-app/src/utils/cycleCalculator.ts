@@ -1,7 +1,3 @@
-// src/utils/cycleCalculator.ts
-// 🎯 SINGLE SOURCE OF TRUTH - Only uses periodLogs collection
-// ✅ FIXED: Proper phase messages that match the phase type
-
 import {
   collection,
   query,

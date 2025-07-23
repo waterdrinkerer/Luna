@@ -318,44 +318,7 @@ const Profile = () => {
           </h2>
 
           <div className="space-y-4">
-            {/* School Logos */}
-            <div className="flex items-center justify-center gap-4 p-4 bg-gray-50 rounded-2xl">
-              <img
-                src="/assets/sunwaylogo.png"
-                alt="School Logo 1"
-                className="h-12 w-auto object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  if (e.currentTarget.nextElementSibling) {
-                    (
-                      e.currentTarget.nextElementSibling as HTMLElement
-                    ).style.display = "flex";
-                  }
-                }}
-              />
-              <div className="hidden w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">
-                Logo 1
-              </div>
-
-              <div className="w-px h-8 bg-gray-300"></div>
-
-              <img
-                src="/assets/lancasterlogo.png"
-                alt="School Logo 2"
-                className="h-12 w-auto object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  if (e.currentTarget.nextElementSibling) {
-                    (
-                      e.currentTarget.nextElementSibling as HTMLElement
-                    ).style.display = "flex";
-                  }
-                }}
-              />
-              <div className="hidden w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">
-                Logo 2
-              </div>
-            </div>
+          
 
             {/* Developer Info */}
             <div className="p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl">

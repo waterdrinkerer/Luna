@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface CyclePhaseWidgetProps {
   phase: string
   message: string

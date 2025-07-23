@@ -1,5 +1,3 @@
-# Luna ML API - Flask app for Google Cloud Run
-# app.py
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -7,6 +5,7 @@ import joblib
 import pandas as pd
 import numpy as np
 import os
+import traceback
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -15,28 +14,58 @@ CORS(app)  # Enable CORS for all routes
 models = {}
 
 def load_models():
-    """Load all ML models on startup"""
+    """Load all ML models on startup with absolute paths"""
+    print("🚀 STARTING MODEL LOADING DEBUG")
+    print(f"📁 Current working directory: {os.getcwd()}")
+    print(f"📂 Files in current directory: {os.listdir('.')}")
+    
+    # Use ABSOLUTE paths for Docker container
+    base_path = "/app"
+    models_dir = os.path.join(base_path, "models")
+    
+    print(f"🎯 Looking for models in: {models_dir}")
+    
+    if os.path.exists(models_dir):
+        print(f"✅ Models directory exists!")
+        print(f"📋 Models directory contents: {os.listdir(models_dir)}")
+        for file in os.listdir(models_dir):
+            file_path = os.path.join(models_dir, file)
+            print(f"   📄 {file}: {os.path.getsize(file_path)} bytes")
+    else:
+        print("❌ Models directory does NOT exist!")
+        print(f"📂 Available directories in {base_path}: {[d for d in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, d))]}")
+        
     print("Loading Luna's world-class ML models...")
     
+    # Use ABSOLUTE paths in Docker container
     model_files = {
-        'cycle_length': 'models/cycle_length_model_minimal.pkl',
-        'menses_length': 'models/menses_length_model.pkl', 
-        'next_period': 'models/next_period_predictor.pkl',
-        'irregular_cycle': 'models/irregular_cycle_detector.pkl',
-        'symptom_predictor': 'models/symptom_predictor.pkl'
+        'cycle_length': '/app/models/cycle_length_model_minimal.pkl',
+        'menses_length': '/app/models/menses_length_model.pkl', 
+        'next_period': '/app/models/next_period_predictor.pkl',
+        'irregular_cycle': '/app/models/irregular_cycle_detector.pkl',
+        'symptom_predictor': '/app/models/symptom_predictor.pkl'
     }
     
     for model_name, file_path in model_files.items():
         try:
+            print(f"🔍 Attempting to load {model_name} from {file_path}")
             if os.path.exists(file_path):
+                print(f"✅ File exists, loading {model_name}...")
                 models[model_name] = joblib.load(file_path)
-                print(f"✅ Loaded {model_name}")
+                print(f"✅ Successfully loaded {model_name}")
             else:
                 print(f"❌ Model file not found: {file_path}")
         except Exception as e:
             print(f"❌ Error loading {model_name}: {e}")
+            print(f"❌ Traceback: {traceback.format_exc()}")
     
-    print(f"Successfully loaded {len(models)} models")
+    print(f"🎉 Successfully loaded {len(models)} models")
+    print(f"📊 Loaded models: {list(models.keys())}")
+
+# 🔥 LOAD MODELS IMMEDIATELY WHEN MODULE IS IMPORTED
+print("🔥 ABOUT TO LOAD MODELS - MODULE IMPORT")
+load_models()
+print("🔥 MODELS LOADING COMPLETE - MODULE IMPORT")
 
 @app.route('/', methods=['GET'])
 def home():
@@ -414,9 +443,5 @@ def predict_symptoms():
         }), 500
 
 if __name__ == '__main__':
-    # Load models on startup
-    load_models()
-    
-    # Start the Flask app
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)

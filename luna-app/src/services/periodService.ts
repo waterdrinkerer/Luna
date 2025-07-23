@@ -1,6 +1,3 @@
-// src/services/periodService.ts
-// 🎯 SINGLE SOURCE OF TRUTH for all period data
-
 import { 
   collection, 
   query, 

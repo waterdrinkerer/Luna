@@ -123,7 +123,7 @@ const ProfilePicChoose = () => {
         Choose Your Profile Picture
       </h1>
 
-      {/* Debug info - prettier version */}
+      {/* Debug info - prettier version
       <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm border text-xs max-w-md w-full">
         <h3 className="font-semibold text-gray-800 mb-2">Setup Summary:</h3>
         <div className="space-y-1 text-gray-600">
@@ -141,7 +141,7 @@ const ProfilePicChoose = () => {
         <div className="mt-2 pt-2 border-t border-gray-100">
           <p className="text-green-600 text-xs">✅ Privacy consent will be preserved</p>
         </div>
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         {avatarOptions.map((pic, index) => (

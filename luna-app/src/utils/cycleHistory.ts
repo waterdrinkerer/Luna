@@ -1,7 +1,7 @@
 // src/utils/cycleHistory.ts
 // ✅ UNIFIED: Only uses periodLogs collection
 
-import { collection, query, orderBy, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export interface PeriodRecord {

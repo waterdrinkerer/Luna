@@ -195,6 +195,10 @@ const AboutMe = () => {
                 <span className="px-3 py-1 bg-pink-100 text-pink-700 text-xs rounded-full">
                   Python
                 </span>
+                <span className="px-3 py-1 bg-pink-100 text-pink-700 text-xs rounded-full">
+                  Google Cloud Run
+                </span>
+                
               </div>
             </div>
           </div>

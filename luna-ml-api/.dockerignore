@@ -1,0 +1,5 @@
+# Create this file: .dockerignore
+.git
+.gitignore
+README.md
+.dockerignore
