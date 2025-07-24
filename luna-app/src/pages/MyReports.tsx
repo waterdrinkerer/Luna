@@ -12,16 +12,7 @@ const reports = [
     accentColor: "text-purple-600",
     stats: "Latest insights",
   },
-  {
-    title: "Symptom Patterns",
-    description: "See what symptoms show up most and when",
-    route: "/my-reports/symptom-patterns",
-    icon: "🎭",
-    gradient: "from-blue-400 to-cyan-400",
-    bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
-    accentColor: "text-blue-600",
-    stats: "AI-powered analysis",
-  },
+  
   {
     title: "Cycle Regularity",
     description: "Evaluate how consistent your cycles have been",
@@ -31,6 +22,16 @@ const reports = [
     bgColor: "bg-gradient-to-br from-emerald-50 to-teal-50",
     accentColor: "text-emerald-600",
     stats: "Health tracking",
+  },
+  {
+    title: "Symptom Patterns",
+    description: "See what symptoms show up most and when",
+    route: "/my-reports/symptom-patterns",
+    icon: "🎭",
+    gradient: "from-blue-400 to-cyan-400",
+    bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
+    accentColor: "text-blue-600",
+    stats: "AI-powered analysis",
   },
 ];
 

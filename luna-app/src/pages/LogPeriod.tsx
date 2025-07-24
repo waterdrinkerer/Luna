@@ -361,11 +361,11 @@ const LogPeriod = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br  from-purple-50 to-pink-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-400 to-pink-400 rounded-b-3xl shadow-lg">
+      <div className="bg-gradient-to-r from-purple-400  to-pink-400 rounded-b-3xl shadow-lg">
         <div className="px-6 pt-8 pb-6">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mt-6 mb-4">
             <button
               onClick={() => navigate(-1)}
               className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
@@ -383,7 +383,7 @@ const LogPeriod = () => {
       </div>
 
       {/* Content */}
-      <div className="px-6 py-6 -mt-4 pb-6">
+      <div className="px-6 py-6 -mt-1 pb-6">
         {/* Period Type Selection */}
         <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4 text-center">

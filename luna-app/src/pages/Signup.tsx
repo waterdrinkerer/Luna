@@ -29,7 +29,6 @@ const Signup = () => {
       firebase: '',
     };
 
-    // 🔍 Field validation
     if (!name) {
       newErrors.name = 'Name is required';
       valid = false;
@@ -57,15 +56,14 @@ const Signup = () => {
 
       await updateProfile(user, { displayName: name });
 
-      // Updated: Save name to Firestore with null for missing fields
       await setDoc(doc(db, "users", user.uid), {
         name,
         email,
         createdAt: new Date(),
-        profilePic: null, // Use null instead of empty string
+        profilePic: null,
       });
 
-     navigate('/privacy-consent');
+      navigate('/privacy-consent');
     } catch (error: unknown) {
       if (error instanceof Error) {
         setErrors((prev) => ({ ...prev, firebase: error.message }));
@@ -76,84 +74,98 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-dvh bg-[#E5DBF7] relative overflow-hidden">
-      <motion.h1
-        initial={{ y: 0 }}
-        animate={{ y: -40 }}
-        transition={{ duration: 0.6 }}
-        className="text-5xl font-bold text-white text-center pt-16"
-      >
-        Luna.
-      </motion.h1>
-
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="absolute bottom-0 w-full bg-white rounded-t-3xl p-6"
-      >
-        <h2 className="text-xl font-bold text-center mb-2">CREATE NEW ACCOUNT</h2>
-        <p className="text-sm text-center text-gray-500 mb-4">
-          Already have an account?{' '}
-          <span
-            className="text-purple-600 font-medium cursor-pointer hover:text-purple-700 transition-colors"
-            onClick={() => navigate('/login')}
-          >
-            Login here
-          </span>
-        </p>
-
-        <input
-          type="text"
-          placeholder="Name"
-          className="w-full p-3 mb-1 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        {errors.name && <p className="text-red-500 text-xs mb-2">{errors.name}</p>}
-
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full p-3 mb-1 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        {errors.email && <p className="text-red-500 text-xs mb-2">{errors.email}</p>}
-
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-3 mb-1 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        {errors.password && <p className="text-red-500 text-xs mb-2">{errors.password}</p>}
-
-        <input
-          type="password"
-          placeholder="Confirm Password"
-          className="w-full p-3 mb-1 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-        {errors.confirmPassword && <p className="text-red-500 text-xs mb-2">{errors.confirmPassword}</p>}
-
-        <p className="text-xs text-center text-gray-500 my-4">
-          By continuing, you agree with our Terms & Conditions and Privacy Policy
-        </p>
-
-        <button
-          className="w-full bg-purple-500 text-white py-3 rounded-full font-semibold hover:bg-purple-600 transition-colors"
-          onClick={handleSignUp}
+    <div className="min-h-dvh bg-[#E5DBF7] flex items-center justify-center px-6">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-8"
         >
-          Sign up
-        </button>
+          <h1 className="text-5xl font-bold text-white mb-4">Luna.</h1>
+        </motion.div>
 
-        {errors.firebase && (
-          <p className="text-red-500 text-xs text-center mt-3">{errors.firebase}</p>
-        )}
-      </motion.div>
+        {/* Form */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white rounded-3xl p-6 shadow-lg"
+        >
+          <h2 className="text-xl font-bold text-center mb-2">CREATE NEW ACCOUNT</h2>
+          <p className="text-sm text-center text-gray-500 mb-6">
+            Already have an account?{' '}
+            <span
+              className="text-purple-600 font-medium cursor-pointer hover:text-purple-700 transition-colors"
+              onClick={() => navigate('/login')}
+            >
+              Log in here
+            </span>
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                placeholder="Name"
+                className="w-full p-3 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1 ml-4">{errors.name}</p>}
+            </div>
+
+            <div>
+              <input
+                type="email"
+                placeholder="Email"
+                className="w-full p-3 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              {errors.email && <p className="text-red-500 text-xs mt-1 ml-4">{errors.email}</p>}
+            </div>
+
+            <div>
+              <input
+                type="password"
+                placeholder="Password"
+                className="w-full p-3 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {errors.password && <p className="text-red-500 text-xs mt-1 ml-4">{errors.password}</p>}
+            </div>
+
+            <div>
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                className="w-full p-3 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              {errors.confirmPassword && <p className="text-red-500 text-xs mt-1 ml-4">{errors.confirmPassword}</p>}
+            </div>
+          </div>
+
+          <p className="text-xs text-center text-gray-500 my-4">
+            By continuing, you agree with our Terms & Conditions and Privacy Policy
+          </p>
+
+          <button
+            className="w-full bg-purple-500 text-white py-3 rounded-full font-semibold hover:bg-purple-600 transition-colors"
+            onClick={handleSignUp}
+          >
+            Sign up
+          </button>
+
+          {errors.firebase && (
+            <p className="text-red-500 text-xs text-center mt-3">{errors.firebase}</p>
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 };

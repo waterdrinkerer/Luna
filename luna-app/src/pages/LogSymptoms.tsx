@@ -130,11 +130,11 @@ const LogSymptomsMood = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF9F5] px-5 pt-6 pb-24">
-      <h1 className="text-xl font-bold mb-1 text-[#333]">Log Today's Mood & Symptoms</h1>
+    <div className="min-h-screen bg-[#FFF9F5] px-5 pt-6 pb-24 ">
+      <h1 className="text-xl mt-6 font-bold mb-1 text-[#333]">Log Today's Mood & Symptoms</h1>
       {hasLoggedToday && <p className="text-sm text-gray-600 mb-4">You already logged today 💜</p>}
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 ">
         {sections.map((section) => (
           <div key={section.title}>
             <h2 className="text-sm font-semibold text-[#555] mb-3">{section.title}</h2>

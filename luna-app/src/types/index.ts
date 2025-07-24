@@ -1,12 +1,14 @@
-// src/types/index.ts
-// ✅ Shared types for Luna app
-
 export interface SymptomLog {
   id: string;
   symptoms?: Record<string, string[]>;
   timestamp: string;
   date: string;
   userId: string;
+  // Add these:
+  cyclePhase?: string;
+  severity?: number;
+  notes?: string;
+  cycleDay?: number;
 }
 
 export interface MoodLog {
@@ -34,6 +36,7 @@ export interface SymptomAnalysis {
   topSymptoms: [string, number][];
   mostCommon: string;
   averagePerLog: number;
+  averageSeverity: number; // Add this line
 }
 
 export interface RegularityAnalysis {
@@ -60,3 +63,4 @@ export interface UserData {
   createdAt?: string;
   updatedAt?: string;
 }
+

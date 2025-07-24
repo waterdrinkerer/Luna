@@ -181,10 +181,10 @@ const ManagePeriods = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
-      <div className="p-6 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 ">
+      <div className="p-6 pb-24 ">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 mt-6 ">
           <button
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center"

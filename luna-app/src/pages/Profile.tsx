@@ -132,11 +132,11 @@ const Profile = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
       {/* Enhanced Header */}
       <div className="bg-gradient-to-r from-purple-400 to-pink-400 rounded-b-3xl shadow-lg">
-        <div className="px-6 pt-8 pb-6">
+        <div className="px-6 pt-8 pb-6 mb-4">
           <div className="flex items-center gap-3 mb-4">
             <button
               onClick={() => navigate(-1)}
-              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
+              className="w-10 h-10 mt-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
             >
               <svg
                 className="w-5 h-5 text-white"
@@ -153,7 +153,7 @@ const Profile = () => {
               </svg>
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-white">My Profile</h1>
+              <h1 className="text-2xl mt-6 font-bold text-white">My Profile</h1>
               <p className="text-white/80 text-sm">
                 Manage your account and privacy
               </p>
@@ -348,20 +348,7 @@ const Profile = () => {
                 </span>
               </button>
 
-              <button
-                onClick={() => {
-                  // You can add navigation to a feedback form or contact page later
-                  alert(
-                    "Feature coming soon! You can add a feedback form or contact page here."
-                  );
-                }}
-                className="w-full flex items-center justify-center gap-2 p-3 bg-yellow-50 hover:bg-yellow-100 rounded-2xl transition-colors border border-yellow-200"
-              >
-                <span className="text-yellow-500">💬</span>
-                <span className="font-medium text-yellow-700">
-                  Send Feedback
-                </span>
-              </button>
+             
             </div>
           </div>
         </div>

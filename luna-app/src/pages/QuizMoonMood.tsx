@@ -254,13 +254,13 @@ const QuizMoonMood = () => {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate(-1)}
-            className="text-white/70 hover:text-white"
+            className="text-white/70 mt-6  hover:text-white"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-lg font-semibold">🌙 Moon Mood Check</h1>
+          <h1 className="text-lg font-semibold mt-6 ">🌙 Moon Mood Check</h1>
           <div className="w-6"></div>
         </div>
 

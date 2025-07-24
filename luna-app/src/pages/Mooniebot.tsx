@@ -69,7 +69,7 @@ const Mooniebot = () => {
       <div className="flex items-center px-4 py-4">
         <button
           onClick={() => navigate("/home")}
-          className="w-9 h-9 mr-2 rounded-full bg-white shadow-md flex items-center justify-center"
+          className="w-9 h-9 mr-2 mt-6 rounded-full bg-white shadow-md flex items-center justify-center"
         >
           <svg
             className="w-5 h-5 text-purple-700"
@@ -81,7 +81,7 @@ const Mooniebot = () => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-xl font-semibold text-purple-800">Ask Moonie</h1>
+        <h1 className="text-xl font-semibold text-purple-800 mt-6 ml-3">Ask Moonie</h1>
       </div>
 
       {/* Messages */}

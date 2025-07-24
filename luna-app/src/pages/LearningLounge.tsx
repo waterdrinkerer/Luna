@@ -385,8 +385,8 @@ const LearningLounge = () => {
   return (
     <div className="min-h-screen pb-20 bg-gradient-to-br from-purple-50 to-pink-50">
       <div className="px-5 pt-6 pb-2">
-        <h1 className="text-2xl font-bold mb-2">
-          <span className="text-[#7E5FFF]">Luna's</span>{" "}
+        <h1 className="text-2xl font-bold mb-2 mt-6">
+          <span className="text-[#7E5FFF] ">Luna's </span>{" "}
           <span className="text-black">Learning Lounge</span>
         </h1>
         <p className="text-gray-600 text-sm mb-4">

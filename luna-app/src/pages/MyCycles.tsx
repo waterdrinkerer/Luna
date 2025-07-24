@@ -48,9 +48,9 @@ const MyCycles = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F4FF] px-5 pt-6 pb-24">
+    <div className="min-h-screen bg-[#F6F4FF] px-5 pt-6 pb-24 ">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 mt-6 ">
         <button
           onClick={() => navigate(-1)}
           className="text-sm text-[#7E5FFF] font-medium flex items-center space-x-1"

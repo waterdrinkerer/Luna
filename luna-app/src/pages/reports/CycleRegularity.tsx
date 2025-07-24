@@ -108,7 +108,7 @@ export const CycleRegularity = () => {
         {/* Back Button - Floating */}
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-6 left-5 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg"
+          className="absolute top-6 mt-6 left-5 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg"
         >
           <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />

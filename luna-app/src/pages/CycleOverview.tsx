@@ -245,16 +245,16 @@ const CycleOverview = () => {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center"
+            className="w-10 h-10 rounded-full mt-6 bg-white shadow-md flex items-center justify-center"
           >
             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-xl font-bold text-gray-800">🤖 ML Cycle Overview</h1>
+          <h1 className="text-xl font-bold mt-6 text-gray-800">🤖 ML Cycle Overview</h1>
           <button
             onClick={() => navigate("/log-period", { state: { returnTo: "/cycle-overview" } })}
-            className="px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-full shadow-md"
+            className="px-4 py-2 mt-6 bg-purple-500 text-white text-sm font-medium rounded-full shadow-md"
           >
             Log Period
           </button>

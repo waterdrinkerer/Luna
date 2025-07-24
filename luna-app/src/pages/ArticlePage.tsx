@@ -26,7 +26,7 @@ const articleContent: ArticleContent = {
     thumbnail: "/assets/vaginal-discharge.png",
     content:
       "Vaginal discharge comes in many colors and textures—and most are completely normal. Clear or milky white discharge is common during ovulation or arousal. Yellow or green hues may signal infection, especially if there’s odor or irritation. Brown discharge might appear before or after your period. This guide helps you identify what’s healthy and what might need a doctor’s visit, empowering you to better understand your body’s natural cycles and recognize changes worth noting.",
-    relatedArticles: ["early-pregnancy-signs", "irregular-periods-explained"],
+    relatedArticles: ["early-pregnancy-signs", "vaginal-discharge-guide"],
   },
 
   "early-pregnancy-signs": {
@@ -321,9 +321,9 @@ const ArticlePage = () => {
           </h2>
           <button
             onClick={() => navigate("/learning")}
-            className="text-purple-600 hover:text-purple-800 underline"
+            className="text-purple-600 hover:text-purple-800 underline "
           >
-            Back to Learning Lounge
+            Back to Learning Lounge 
           </button>
         </div>
       </div>
@@ -385,7 +385,7 @@ const ArticlePage = () => {
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 px-5 pt-6 pb-8">
         <button
           onClick={() => navigate("/learning")}
-          className="mb-4 flex items-center gap-2 text-purple-600 hover:text-purple-800 transition-colors"
+          className="mb-4 flex items-center gap-2 mt-6 text-purple-600 hover:text-purple-800 transition-colors"
         >
           <svg
             className="w-5 h-5"
@@ -400,7 +400,7 @@ const ArticlePage = () => {
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          <span className="font-medium">Back to Learning Lounge</span>
+          <span className="font-medium " >Back to Learning Lounge</span>
         </button>
 
         <div className="mb-4">
@@ -509,9 +509,9 @@ const ArticlePage = () => {
                   <button
                     key={relatedId}
                     onClick={() => navigate(`/learning/${relatedId}`)}
-                    className="text-left p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl hover:shadow-md transition-all duration-200 border border-purple-100"
+                    className="text-left  p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl hover:shadow-md transition-all duration-200 border border-purple-100"
                   >
-                    <h4 className="font-semibold text-gray-800 mb-2 line-clamp-2">
+                    <h4 className="font-semibold text-gray-800 mb-2 line-clamp-2 ">
                       {relatedArticle.title}
                     </h4>
                     <p className="text-sm text-gray-600 mb-2">

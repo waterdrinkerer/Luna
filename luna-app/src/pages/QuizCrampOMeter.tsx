@@ -214,7 +214,7 @@ const QuizCrampOMeter = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">🔥</div>
-            <h1 className="text-2xl font-bold mb-2">Cramp-o-Meter Results</h1>
+            <h1 className="text-2xl font-bold mb-2 ">Cramp-o-Meter Results</h1>
             <div
               className="text-xl font-semibold px-4 py-2 rounded-full mx-auto inline-block"
               style={{ backgroundColor: analysis.color }}
@@ -325,7 +325,7 @@ const QuizCrampOMeter = () => {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate(-1)}
-            className="text-white/70 hover:text-white"
+            className="text-white/70 hover:text-white mt-6 "
           >
             <svg
               className="w-6 h-6"
@@ -341,7 +341,7 @@ const QuizCrampOMeter = () => {
               />
             </svg>
           </button>
-          <h1 className="text-lg font-semibold">🔥 Cramp-o-Meter</h1>
+          <h1 className="text-lg font-semibold mt-6 ">🔥 Cramp-o-Meter</h1>
           <div className="w-6"></div>
         </div>
 

@@ -301,9 +301,9 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F1FA] flex flex-col gap-6 p-4 pb-24 overflow-y-auto">
+    <div className="min-h-screen  bg-[#F4F1FA] flex flex-col gap-6 p-4 pb-24 overflow-y-auto">
       {/* Section 1: Greeting & Profile */}
-      <div className="flex items-center justify-between">
+      <div className="flex mt-6 items-center justify-between">
         <div>
           <p className="text-lg font-medium text-purple-800">{getGreeting()},</p>
           <h1 className="text-2xl font-bold">

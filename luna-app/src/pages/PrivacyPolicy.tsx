@@ -7,18 +7,18 @@ const PrivacyPolicy = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-400 to-pink-400 rounded-b-3xl shadow-lg">
-        <div className="px-6 pt-8 pb-6">
+        <div className="px-6 pt-8 pb-6 mb-4">
           <div className="flex items-center gap-3 mb-4">
             <button
               onClick={() => navigate(-1)}
-              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
+              className="w-10 h-10 mt-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
             >
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-white">Privacy Policy</h1>
+              <h1 className="text-2xl mt-6 font-bold text-white">Privacy Policy</h1>
               <p className="text-white/80 text-sm">Your data, your rights</p>
             </div>
           </div>
@@ -146,7 +146,7 @@ const PrivacyPolicy = () => {
               <div className="bg-gray-50 p-4 rounded-xl">
                 <p className="text-sm text-gray-600">
                   <strong>💡 To exercise these rights:</strong> Go to Profile → Privacy Settings or contact us at 
-                  <span className="text-purple-600 font-medium"> privacy@luna-app.com</span>
+                  <span className="text-purple-600 font-medium"> taeunicev@gmail.com</span>
                 </p>
               </div>
             </div>
@@ -178,9 +178,8 @@ const PrivacyPolicy = () => {
                 If you have questions about this privacy policy or your data:
               </p>
               <ul className="text-sm text-blue-600 space-y-1">
-                <li>• Email: <strong>privacy@luna-app.com</strong></li>
-                <li>• Response time: Within 72 hours</li>
-                <li>• Available in: English, Spanish, French</li>
+                <li>• Email: <strong>taeunicev@gmail.com</strong></li>
+
               </ul>
             </div>
           </section>

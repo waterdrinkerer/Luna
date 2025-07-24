@@ -31,6 +31,7 @@ import Mooniebot from "./pages/Mooniebot.tsx";
 import LearningLounge from "./pages/LearningLounge.tsx";
 import ArticlePage from "./pages/ArticlePage.tsx";
 
+
 import MyReports from "./pages/MyReports.tsx";
 import LastCycleReport from "./pages/reports/LastCycleReport.tsx";
 import SymptomPatterns from "./pages/reports/SymptomPatterns.tsx";
@@ -58,6 +59,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           {/* ✅ PROTECTED ROUTES - WITH AuthWrapper */}
           <Route path="/*" element={
             <AuthWrapper>
+    
               <Routes>
                 {/* Onboarding flow - requires auth but not completion */}
                 <Route path="/privacy-consent" element={<PrivacyConsent />} />
@@ -91,6 +93,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/cycle-overview" element={<CycleOverview />} />
               </Routes>
+
             </AuthWrapper>
           } />
         </Routes>
