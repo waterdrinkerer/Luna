@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
 
 import Welcome from "./pages/Welcome.tsx";
 import Login from "./pages/Login.tsx";
@@ -51,10 +51,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <OnboardingProvider>
         <Routes>
           {/* ✅ PUBLIC ROUTES - NO AuthWrapper */}
+          
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/privacy-policy-public" element={<PrivacyPolicy />} />
+
+          {/* Redirect root `/` to welcome */}
+<Route path="/" element={<Navigate to="/welcome" replace />} />
           
           {/* ✅ PROTECTED ROUTES - WITH AuthWrapper */}
           <Route path="/*" element={
