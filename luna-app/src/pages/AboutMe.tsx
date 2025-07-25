@@ -219,43 +219,15 @@ const AboutMe = () => {
 
         {/* Contact/Feedback Section */}
         <div className="bg-white rounded-3xl shadow-lg p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="text-green-500">📞</span>
-            Get in Touch
-          </h2>
-
-          <div className="space-y-3">
-            <button
-              onClick={() => {
-                // You can add email functionality later
-                window.location.href =
-                  "mailto:your.email@student.university.edu";
-              }}
-              className="w-full flex items-center justify-center gap-2 p-4 bg-green-50 hover:bg-green-100 rounded-2xl transition-colors border border-green-200"
-            >
-              <span className="text-green-500">📧</span>
-              <span className="font-semibold text-green-700">Send Email</span>
-            </button>
-
-            <button
-              onClick={() => {
-                // You can add feedback form navigation later
-                alert("Feedback form coming soon!");
-              }}
-              className="w-full flex items-center justify-center gap-2 p-4 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-colors border border-blue-200"
-            >
-              <span className="text-blue-500">💬</span>
-              <span className="font-semibold text-blue-700">Send Feedback</span>
-            </button>
-
+       
             <div className="p-4 bg-gray-50 rounded-2xl text-center">
               <p className="text-sm text-gray-600">
                 Thank you for using this application!
                 <br />
-                Your feedback helps improve the project.
+               
               </p>
             </div>
-          </div>
+          
         </div>
 
         {/* Version Information */}
