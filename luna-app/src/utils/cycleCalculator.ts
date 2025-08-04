@@ -152,7 +152,7 @@ export const getMostRecentCycleData = async (userId: string): Promise<CycleData>
       return {
         id: doc.id,
         startDate: data.startDate,
-        endDate: data.endDatea,
+        endDate: data.endDate,
         duration: data.duration || 5,
         ...data,
       };

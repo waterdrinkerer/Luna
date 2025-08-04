@@ -1,23 +1,31 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { DayPicker } from 'react-day-picker';
-import type { DateRange } from 'react-day-picker';
-import { collection, doc, setDoc, getDocs, query, orderBy, getDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase';
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { DayPicker } from "react-day-picker";
+import type { DateRange } from "react-day-picker";
+import {
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  query,
+  orderBy,
+  getDoc,
+} from "firebase/firestore";
+import { db, auth } from "../firebase";
 
-import 'react-day-picker/dist/style.css';
+import "react-day-picker/dist/style.css";
 
-type PeriodType = 'past' | 'current';
+type PeriodType = "past" | "current";
 
 // ✅ NEW: Exclusion reasons for irregular periods
-type ExclusionReason = 
-  | 'emergency_contraception'
-  | 'hormonal_medication'
-  | 'stress_illness'
-  | 'postpartum_breastfeeding'
-  | 'travel_timezone'
-  | 'weight_change'
-  | 'other';
+type ExclusionReason =
+  | "emergency_contraception"
+  | "hormonal_medication"
+  | "stress_illness"
+  | "postpartum_breastfeeding"
+  | "travel_timezone"
+  | "weight_change"
+  | "other";
 
 interface ExclusionReasonOption {
   value: ExclusionReason;
@@ -29,71 +37,73 @@ interface ExclusionReasonOption {
 
 const EXCLUSION_REASONS: ExclusionReasonOption[] = [
   {
-    value: 'emergency_contraception',
-    label: 'Plan B / Emergency Contraception',
-    emoji: '💊',
-    description: 'Took Plan B, morning-after pill, or emergency contraception',
-    color: 'bg-red-50 text-red-700 border-red-200'
+    value: "emergency_contraception",
+    label: "Plan B / Emergency Contraception",
+    emoji: "💊",
+    description: "Took Plan B, morning-after pill, or emergency contraception",
+    color: "bg-red-50 text-red-700 border-red-200",
   },
   {
-    value: 'hormonal_medication',
-    label: 'Hormonal Medication',
-    emoji: '🏥',
-    description: 'Birth control, hormone therapy, or other medications',
-    color: 'bg-blue-50 text-blue-700 border-blue-200'
+    value: "hormonal_medication",
+    label: "Hormonal Medication",
+    emoji: "🏥",
+    description: "Birth control, hormone therapy, or other medications",
+    color: "bg-blue-50 text-blue-700 border-blue-200",
   },
   {
-    value: 'stress_illness',
-    label: 'Stress or Illness',
-    emoji: '😰',
-    description: 'High stress, fever, illness, or major life changes',
-    color: 'bg-yellow-50 text-yellow-700 border-yellow-200'
+    value: "stress_illness",
+    label: "Stress or Illness",
+    emoji: "😰",
+    description: "High stress, fever, illness, or major life changes",
+    color: "bg-yellow-50 text-yellow-700 border-yellow-200",
   },
   {
-    value: 'postpartum_breastfeeding',
-    label: 'Postpartum / Breastfeeding',
-    emoji: '🤱',
-    description: 'Post-pregnancy, breastfeeding, or postpartum recovery',
-    color: 'bg-pink-50 text-pink-700 border-pink-200'
+    value: "postpartum_breastfeeding",
+    label: "Postpartum / Breastfeeding",
+    emoji: "🤱",
+    description: "Post-pregnancy, breastfeeding, or postpartum recovery",
+    color: "bg-pink-50 text-pink-700 border-pink-200",
   },
   {
-    value: 'travel_timezone',
-    label: 'Travel / Timezone Changes',
-    emoji: '✈️',
-    description: 'Long travel, jet lag, or significant schedule changes',
-    color: 'bg-purple-50 text-purple-700 border-purple-200'
+    value: "travel_timezone",
+    label: "Travel / Timezone Changes",
+    emoji: "✈️",
+    description: "Long travel, jet lag, or significant schedule changes",
+    color: "bg-purple-50 text-purple-700 border-purple-200",
   },
   {
-    value: 'weight_change',
-    label: 'Significant Weight Change',
-    emoji: '⚖️',
-    description: 'Rapid weight loss/gain, diet changes, or eating disorders',
-    color: 'bg-orange-50 text-orange-700 border-orange-200'
+    value: "weight_change",
+    label: "Significant Weight Change",
+    emoji: "⚖️",
+    description: "Rapid weight loss/gain, diet changes, or eating disorders",
+    color: "bg-orange-50 text-orange-700 border-orange-200",
   },
   {
-    value: 'other',
-    label: 'Other Irregular Circumstances',
-    emoji: '❓',
-    description: 'Other factors that may have affected this cycle',
-    color: 'bg-gray-50 text-gray-700 border-gray-200'
-  }
+    value: "other",
+    label: "Other Irregular Circumstances",
+    emoji: "❓",
+    description: "Other factors that may have affected this cycle",
+    color: "bg-gray-50 text-gray-700 border-gray-200",
+  },
 ];
 
 const LogPeriod = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const returnTo = location.state?.returnTo || '/home';
 
-  const [periodType, setPeriodType] = useState<PeriodType>('current');
+  const returnTo = location.state?.returnTo || "/home";
+
+  const [periodType, setPeriodType] = useState<PeriodType>("current");
   const [range, setRange] = useState<DateRange | undefined>({
     from: undefined,
     to: undefined,
   });
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [isLogging, setIsLogging] = useState(false);
-  const [selectedFlow, setSelectedFlow] = useState<'light' | 'medium' | 'heavy'>('medium');
-  const [notes, setNotes] = useState('');
+  const [selectedFlow, setSelectedFlow] = useState<
+    "light" | "medium" | "heavy"
+  >("medium");
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
 
   // ✅ NEW: Previous periods for calendar marking
@@ -101,10 +111,11 @@ const LogPeriod = () => {
 
   // ✅ NEW: ML Exclusion States
   const [excludeFromML, setExcludeFromML] = useState(false);
-  const [exclusionReason, setExclusionReason] = useState<ExclusionReason | null>(null);
-  const [customExclusionNote, setCustomExclusionNote] = useState('');
+  const [exclusionReason, setExclusionReason] =
+    useState<ExclusionReason | null>(null);
+  const [customExclusionNote, setCustomExclusionNote] = useState("");
 
-  // ✅ NEW: Fetch previous periods to show on calendar
+  // ✅ FIXED: Fetch previous periods to show on calendar
   useEffect(() => {
     const fetchPreviousPeriods = async () => {
       const user = auth.currentUser;
@@ -122,23 +133,26 @@ const LogPeriod = () => {
         const periods: DateRange[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.startDate && data.endDate) {
+
+          // ✅ FIXED: Only include completed periods for calendar display
+          // Don't show ongoing periods on the calendar picker since they might confuse users
+          if (data.startDate && data.endDate && !data.isOngoing) {
             periods.push({
               from: new Date(data.startDate),
-              to: new Date(data.endDate)
+              to: new Date(data.endDate),
             });
           }
         });
 
         // Also get onboarding period from user profile
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        
+
         if (userDoc.exists()) {
           const userData = userDoc.data();
           if (userData.lastPeriodStart && userData.lastPeriodEnd) {
             periods.push({
               from: new Date(userData.lastPeriodStart),
-              to: new Date(userData.lastPeriodEnd)
+              to: new Date(userData.lastPeriodEnd),
             });
           }
         }
@@ -157,14 +171,14 @@ const LogPeriod = () => {
 
   // ✅ Calendar helper functions
   const isDateInPreviousPeriod = (date: Date) => {
-    return previousPeriods.some(period => {
+    return previousPeriods.some((period) => {
       if (!period.from || !period.to) return false;
       return date >= period.from && date <= period.to;
     });
   };
 
   const isPeriodBoundary = (date: Date) => {
-    return previousPeriods.some(period => {
+    return previousPeriods.some((period) => {
       if (!period.from || !period.to) return false;
       return (
         date.toDateString() === period.from.toDateString() ||
@@ -180,19 +194,25 @@ const LogPeriod = () => {
     if (selectedRange instanceof Date) {
       checkFrom = selectedRange;
       checkTo = selectedRange;
-    } else if (selectedRange && 'from' in selectedRange) {
+    } else if (selectedRange && "from" in selectedRange) {
       checkFrom = selectedRange.from;
       checkTo = selectedRange.to;
     }
 
     if (!checkFrom) return null;
-    
-    return previousPeriods.find(period => {
+
+    return previousPeriods.find((period) => {
       if (!period.from || !period.to) return false;
-      
-      const overlapStart = Math.max(checkFrom!.getTime(), period.from.getTime());
-      const overlapEnd = Math.min((checkTo || checkFrom!).getTime(), period.to.getTime());
-      
+
+      const overlapStart = Math.max(
+        checkFrom!.getTime(),
+        period.from.getTime()
+      );
+      const overlapEnd = Math.min(
+        (checkTo || checkFrom!).getTime(),
+        period.to.getTime()
+      );
+
       return overlapStart <= overlapEnd;
     });
   };
@@ -214,26 +234,30 @@ const LogPeriod = () => {
   const handleLogPeriod = async () => {
     const user = auth.currentUser;
     if (!user) {
-      alert('Please log in to save your period.');
+      alert("Please log in to save your period.");
       return;
     }
 
     // Validate based on period type
-    if (periodType === 'past') {
+    if (periodType === "past") {
       if (!range?.from || !range?.to) {
-        alert('Please select both start and end dates for your completed period.');
+        alert(
+          "Please select both start and end dates for your completed period."
+        );
         return;
       }
     } else {
       if (!startDate) {
-        alert('Please select when your current period started.');
+        alert("Please select when your current period started.");
         return;
       }
     }
 
     // Validate ML exclusion
     if (excludeFromML && !exclusionReason) {
-      alert('Please select a reason for excluding this period from predictions.');
+      alert(
+        "Please select a reason for excluding this period from predictions."
+      );
       return;
     }
 
@@ -243,11 +267,13 @@ const LogPeriod = () => {
       let periodData: any;
       let docId: string;
 
-      if (periodType === 'past') {
+      if (periodType === "past") {
         // Past period - has both start and end dates
-        const duration = Math.ceil(
-          (range!.to!.getTime() - range!.from!.getTime()) / (1000 * 60 * 60 * 1000)
-        ) + 1;
+        const duration =
+          Math.ceil(
+            (range!.to!.getTime() - range!.from!.getTime()) /
+              (1000 * 60 * 60 * 24)
+          ) + 1;
 
         if (duration > 10) {
           const confirmed = window.confirm(
@@ -265,8 +291,8 @@ const LogPeriod = () => {
           duration,
           isOngoing: false,
           loggedAt: new Date().toISOString(),
-          type: 'past' as const,
-          source: 'manual_log',
+          type: "past" as const,
+          source: "manual_log",
           flow: selectedFlow,
           notes,
           updatedAt: new Date().toISOString(),
@@ -274,27 +300,29 @@ const LogPeriod = () => {
           excludeFromML: excludeFromML,
           exclusionReason: excludeFromML ? exclusionReason : null,
           isIrregular: excludeFromML,
-          irregularityNote: excludeFromML ? (customExclusionNote || getExclusionDescription(exclusionReason!)) : null
+          irregularityNote: excludeFromML
+            ? customExclusionNote || getExclusionDescription(exclusionReason!)
+            : null,
         };
 
-        docId = range!.from!.toISOString().split('T')[0];
-
+        docId = range!.from!.toISOString().split("T")[0];
       } else {
         // Current period - only has start date, still ongoing
         const today = new Date();
-        const daysSinceStart = Math.floor(
-          (today.getTime() - startDate!.getTime()) / (1000 * 60 * 60 * 24)
-        ) + 1;
+        const daysSinceStart =
+          Math.floor(
+            (today.getTime() - startDate!.getTime()) / (1000 * 60 * 60 * 24)
+          ) + 1;
 
         periodData = {
           startDate: startDate!.toISOString(),
-          endDate: null, // No end date yet
-          duration: null, // Will be calculated when period ends
+          endDate: null, // ✅ FIXED: Explicitly set to null for ongoing periods
+          duration: null, // ✅ FIXED: Will be calculated when period ends
           currentDay: daysSinceStart,
-          isOngoing: true,
+          isOngoing: true, // ✅ FIXED: Mark as ongoing
           loggedAt: new Date().toISOString(),
-          type: 'current' as const,
-          source: 'manual_log',
+          type: "current" as const,
+          source: "manual_log",
           flow: selectedFlow,
           notes,
           updatedAt: new Date().toISOString(),
@@ -302,32 +330,40 @@ const LogPeriod = () => {
           excludeFromML: excludeFromML,
           exclusionReason: excludeFromML ? exclusionReason : null,
           isIrregular: excludeFromML,
-          irregularityNote: excludeFromML ? (customExclusionNote || getExclusionDescription(exclusionReason!)) : null
+          irregularityNote: excludeFromML
+            ? customExclusionNote || getExclusionDescription(exclusionReason!)
+            : null,
         };
 
-        docId = startDate!.toISOString().split('T')[0];
+        docId = startDate!.toISOString().split("T")[0];
       }
 
-      const periodRef = doc(collection(db, 'users', user.uid, 'periodLogs'), docId);
+      const periodRef = doc(
+        collection(db, "users", user.uid, "periodLogs"),
+        docId
+      );
       await setDoc(periodRef, periodData, { merge: true });
 
-      console.log('✅ Period logged successfully with ML exclusion data:', periodData);
-      
+      console.log(
+        "✅ Period logged successfully with ML exclusion data:",
+        periodData
+      );
+
       // Show contextual success message
-      const baseMessage = periodType === 'past' 
-        ? 'Period logged successfully! 🎉'
-        : 'Current period tracking started! 🩸';
-      
-      const exclusionMessage = excludeFromML 
-        ? '\n\n💡 This period will not be used for cycle predictions to keep your AI insights accurate.'
-        : '';
-      
+      const baseMessage =
+        periodType === "past"
+          ? "Period logged successfully! 🎉"
+          : "Current period tracking started! 🩸";
+
+      const exclusionMessage = excludeFromML
+        ? "\n\n💡 This period will not be used for cycle predictions to keep your AI insights accurate."
+        : "";
+
       alert(baseMessage + exclusionMessage);
       navigate(returnTo);
-      
     } catch (error) {
-      console.error('❌ Error logging period:', error);
-      alert('Failed to log period. Please try again.');
+      console.error("❌ Error logging period:", error);
+      alert("Failed to log period. Please try again.");
     } finally {
       setIsLogging(false);
     }
@@ -335,19 +371,23 @@ const LogPeriod = () => {
 
   // ✅ Helper function to get exclusion description
   const getExclusionDescription = (reason: ExclusionReason): string => {
-    const option = EXCLUSION_REASONS.find(r => r.value === reason);
-    return option?.description || 'Irregular period';
+    const option = EXCLUSION_REASONS.find((r) => r.value === reason);
+    return option?.description || "Irregular period";
   };
 
   // ✅ Validation based on period type
-  const isValid = periodType === 'past' 
-    ? (range?.from && range?.to)
-    : !!startDate;
+  const isValid =
+    periodType === "past" ? range?.from && range?.to : !!startDate;
 
   // ✅ Check for duplicates
-  const duplicatePeriod = periodType === 'past' 
-    ? (range?.from && range?.to ? checkForDuplicates(range) : null)
-    : (startDate ? checkForDuplicates(startDate) : null);
+  const duplicatePeriod =
+    periodType === "past"
+      ? range?.from && range?.to
+        ? checkForDuplicates(range)
+        : null
+      : startDate
+      ? checkForDuplicates(startDate)
+      : null;
 
   if (loading) {
     return (
@@ -370,13 +410,25 @@ const LogPeriod = () => {
               onClick={() => navigate(-1)}
               className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
             >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <div>
               <h1 className="text-2xl font-bold text-white">Log Period</h1>
-              <p className="text-white/80 text-sm">Track your menstrual cycle</p>
+              <p className="text-white/80 text-sm">
+                Track your menstrual cycle
+              </p>
             </div>
           </div>
         </div>
@@ -389,41 +441,47 @@ const LogPeriod = () => {
           <h2 className="text-lg font-bold text-gray-800 mb-4 text-center">
             What type of period are you logging?
           </h2>
-          
+
           <div className="grid grid-cols-1 gap-4 mb-6">
             <button
-              onClick={() => setPeriodType('current')}
+              onClick={() => setPeriodType("current")}
               className={`p-4 rounded-2xl border-2 text-left transition-all ${
-                periodType === 'current'
-                  ? 'bg-pink-50 border-pink-300 ring-2 ring-pink-200'
-                  : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                periodType === "current"
+                  ? "bg-pink-50 border-pink-300 ring-2 ring-pink-200"
+                  : "bg-gray-50 border-gray-200 hover:bg-gray-100"
               }`}
             >
               <div className="flex items-center gap-4">
                 <span className="text-3xl">🩸</span>
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-lg">My period is happening now</h3>
+                  <h3 className="font-semibold text-gray-800 text-lg">
+                    My period is happening now
+                  </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    Started recently and still ongoing - we'll track it until it ends
+                    Started recently and still ongoing - we'll track it until it
+                    ends
                   </p>
                 </div>
               </div>
             </button>
 
             <button
-              onClick={() => setPeriodType('past')}
+              onClick={() => setPeriodType("past")}
               className={`p-4 rounded-2xl border-2 text-left transition-all ${
-                periodType === 'past'
-                  ? 'bg-purple-50 border-purple-300 ring-2 ring-purple-200'
-                  : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                periodType === "past"
+                  ? "bg-purple-50 border-purple-300 ring-2 ring-purple-200"
+                  : "bg-gray-50 border-gray-200 hover:bg-gray-100"
               }`}
             >
               <div className="flex items-center gap-4">
                 <span className="text-3xl">📅</span>
                 <div>
-                  <h3 className="font-semibold text-gray-800 text-lg">My period already ended</h3>
+                  <h3 className="font-semibold text-gray-800 text-lg">
+                    My period already ended
+                  </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    Logging a completed period from the past with start and end dates
+                    Logging a completed period from the past with start and end
+                    dates
                   </p>
                 </div>
               </div>
@@ -467,7 +525,7 @@ const LogPeriod = () => {
             }
           `}</style>
 
-          {periodType === 'past' ? (
+          {periodType === "past" ? (
             // Past period - select date range
             <>
               <div className="flex items-center justify-between mb-4">
@@ -484,7 +542,7 @@ const LogPeriod = () => {
               <p className="text-sm text-gray-600 mb-4 text-center">
                 Choose the start and end dates of your finished period
               </p>
-              
+
               <div className="flex justify-center mb-4">
                 <DayPicker
                   mode="range"
@@ -492,19 +550,19 @@ const LogPeriod = () => {
                   onSelect={handleRangeSelect}
                   className="rounded-2xl border border-gray-200 p-4 bg-gray-50"
                   classNames={{
-                    selected: 'bg-purple-500 text-white',
-                    range_start: 'bg-purple-600 text-white',
-                    range_end: 'bg-purple-600 text-white',
-                    range_middle: 'bg-purple-100 text-purple-800',
-                    today: 'font-bold text-purple-600 bg-purple-50',
+                    selected: "bg-purple-500 text-white",
+                    range_start: "bg-purple-600 text-white",
+                    range_end: "bg-purple-600 text-white",
+                    range_middle: "bg-purple-100 text-purple-800",
+                    today: "font-bold text-purple-600 bg-purple-50",
                   }}
                   modifiers={{
                     previousPeriod: (date) => isDateInPreviousPeriod(date),
-                    previousPeriodBoundary: (date) => isPeriodBoundary(date)
+                    previousPeriodBoundary: (date) => isPeriodBoundary(date),
                   }}
                   modifiersClassNames={{
-                    previousPeriod: 'previous-period',
-                    previousPeriodBoundary: 'previous-period-boundary'
+                    previousPeriod: "previous-period",
+                    previousPeriodBoundary: "previous-period-boundary",
                   }}
                   disabled={{ after: new Date() }}
                 />
@@ -512,19 +570,25 @@ const LogPeriod = () => {
 
               {/* Show selected range */}
               {range?.from && range?.to && (
-                <div className={`rounded-2xl p-4 border mb-4 ${
-                  duplicatePeriod 
-                    ? 'bg-yellow-50 border-yellow-200' 
-                    : 'bg-purple-50 border-purple-100'
-                }`}>
+                <div
+                  className={`rounded-2xl p-4 border mb-4 ${
+                    duplicatePeriod
+                      ? "bg-yellow-50 border-yellow-200"
+                      : "bg-purple-50 border-purple-100"
+                  }`}
+                >
                   {duplicatePeriod && (
                     <div className="flex items-center space-x-2 mb-3 text-yellow-800">
                       <span className="text-lg">⚠️</span>
                       <div>
-                        <p className="font-medium text-sm">Possible Duplicate Period</p>
-                        <p className="text-xs">This overlaps with a previously logged period</p>
+                        <p className="font-medium text-sm">
+                          Possible Duplicate Period
+                        </p>
+                        <p className="text-xs">
+                          This overlaps with a previously logged period
+                        </p>
                         <button
-                          onClick={() => navigate('/manage-periods')}
+                          onClick={() => navigate("/manage-periods")}
                           className="text-blue-600 text-xs underline mt-1"
                         >
                           Edit existing period instead?
@@ -532,21 +596,32 @@ const LogPeriod = () => {
                       </div>
                     </div>
                   )}
-                  
-                  <h4 className="font-semibold text-purple-800 mb-2">📊 Period Summary</h4>
+
+                  <h4 className="font-semibold text-purple-800 mb-2">
+                    📊 Period Summary
+                  </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                     <div className="bg-white rounded-xl p-3">
                       <p className="text-purple-600 font-medium">Started</p>
-                      <p className="text-gray-700">{range.from.toLocaleDateString()}</p>
+                      <p className="text-gray-700">
+                        {range.from.toLocaleDateString()}
+                      </p>
                     </div>
                     <div className="bg-white rounded-xl p-3">
                       <p className="text-purple-600 font-medium">Ended</p>
-                      <p className="text-gray-700">{range.to.toLocaleDateString()}</p>
+                      <p className="text-gray-700">
+                        {range.to.toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                   <div className="text-center bg-white rounded-xl p-2">
                     <p className="text-sm text-purple-700">
-                      <strong>Total Duration:</strong> {Math.ceil((range.to.getTime() - range.from.getTime()) / (1000 * 60 * 60 * 24)) + 1} days
+                      <strong>Total Duration:</strong>{" "}
+                      {Math.ceil(
+                        (range.to.getTime() - range.from.getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      ) + 1}{" "}
+                      days
                     </p>
                   </div>
                 </div>
@@ -567,9 +642,10 @@ const LogPeriod = () => {
                 )}
               </div>
               <p className="text-sm text-gray-600 mb-4 text-center">
-                Select the day your period began (it's okay if it was today or a few days ago)
+                Select the day your period began (it's okay if it was today or a
+                few days ago)
               </p>
-              
+
               <div className="flex justify-center mb-4">
                 <DayPicker
                   mode="single"
@@ -577,16 +653,16 @@ const LogPeriod = () => {
                   onSelect={handleStartDateSelect}
                   className="rounded-2xl border border-gray-200 p-4 bg-gray-50"
                   classNames={{
-                    selected: 'bg-pink-500 text-white',
-                    today: 'font-bold text-pink-600 bg-pink-50',
+                    selected: "bg-pink-500 text-white",
+                    today: "font-bold text-pink-600 bg-pink-50",
                   }}
                   modifiers={{
                     previousPeriod: (date) => isDateInPreviousPeriod(date),
-                    previousPeriodBoundary: (date) => isPeriodBoundary(date)
+                    previousPeriodBoundary: (date) => isPeriodBoundary(date),
                   }}
                   modifiersClassNames={{
-                    previousPeriod: 'previous-period',
-                    previousPeriodBoundary: 'previous-period-boundary'
+                    previousPeriod: "previous-period",
+                    previousPeriodBoundary: "previous-period-boundary",
                   }}
                   disabled={{ after: new Date() }}
                 />
@@ -594,19 +670,25 @@ const LogPeriod = () => {
 
               {/* Show selected start date and current day */}
               {startDate && (
-                <div className={`rounded-2xl p-4 border mb-4 ${
-                  duplicatePeriod 
-                    ? 'bg-yellow-50 border-yellow-200' 
-                    : 'bg-pink-50 border-pink-100'
-                }`}>
+                <div
+                  className={`rounded-2xl p-4 border mb-4 ${
+                    duplicatePeriod
+                      ? "bg-yellow-50 border-yellow-200"
+                      : "bg-pink-50 border-pink-100"
+                  }`}
+                >
                   {duplicatePeriod && (
                     <div className="flex items-center space-x-2 mb-3 text-yellow-800">
                       <span className="text-lg">⚠️</span>
                       <div>
-                        <p className="font-medium text-sm">Possible Duplicate Period</p>
-                        <p className="text-xs">This date overlaps with a previously logged period</p>
+                        <p className="font-medium text-sm">
+                          Possible Duplicate Period
+                        </p>
+                        <p className="text-xs">
+                          This date overlaps with a previously logged period
+                        </p>
                         <button
-                          onClick={() => navigate('/manage-periods')}
+                          onClick={() => navigate("/manage-periods")}
                           className="text-blue-600 text-xs underline mt-1"
                         >
                           Edit existing period instead?
@@ -614,17 +696,25 @@ const LogPeriod = () => {
                       </div>
                     </div>
                   )}
-                  
-                  <h4 className="font-semibold text-pink-800 mb-2">🔴 Current Period Status</h4>
+
+                  <h4 className="font-semibold text-pink-800 mb-2">
+                    🔴 Current Period Status
+                  </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                     <div className="bg-white rounded-xl p-3">
                       <p className="text-pink-600 font-medium">Started On</p>
-                      <p className="text-gray-700">{startDate.toLocaleDateString()}</p>
+                      <p className="text-gray-700">
+                        {startDate.toLocaleDateString()}
+                      </p>
                     </div>
                     <div className="bg-white rounded-xl p-3">
                       <p className="text-pink-600 font-medium">Currently Day</p>
                       <p className="text-gray-700 font-bold">
-                        Day {Math.floor((new Date().getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1}
+                        Day{" "}
+                        {Math.floor(
+                          (new Date().getTime() - startDate.getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        ) + 1}
                       </p>
                     </div>
                   </div>
@@ -651,19 +741,32 @@ const LogPeriod = () => {
                 {previousPeriods.slice(0, 3).map((period, index) => (
                   <div key={index} className="flex justify-between">
                     <span>
-                      {period.from?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - 
-                      {period.to?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {period.from?.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}{" "}
+                      -
+                      {period.to?.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </span>
                     <span>
-                      {period.from && period.to 
-                        ? Math.ceil((period.to.getTime() - period.from.getTime()) / (1000 * 60 * 60 * 24)) + 1 + ' days'
-                        : ''
-                      }
+                      {period.from && period.to
+                        ? Math.ceil(
+                            (period.to.getTime() - period.from.getTime()) /
+                              (1000 * 60 * 60 * 24)
+                          ) +
+                          1 +
+                          " days"
+                        : ""}
                     </span>
                   </div>
                 ))}
                 {previousPeriods.length > 3 && (
-                  <p className="text-red-600 font-medium">+ {previousPeriods.length - 3} more periods</p>
+                  <p className="text-red-600 font-medium">
+                    + {previousPeriods.length - 3} more periods
+                  </p>
                 )}
               </div>
             </div>
@@ -679,11 +782,14 @@ const LogPeriod = () => {
                   <span className="text-blue-600 text-sm">🤖</span>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800 mb-2">AI Prediction Settings</h3>
+                  <h3 className="font-semibold text-gray-800 mb-2">
+                    AI Prediction Settings
+                  </h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Help us keep your cycle predictions accurate by letting us know if this period was affected by special circumstances.
+                    Help us keep your cycle predictions accurate by letting us
+                    know if this period was affected by special circumstances.
                   </p>
-                  
+
                   {/* Toggle Switch */}
                   <label className="flex items-center gap-3 cursor-pointer">
                     <div className="relative">
@@ -694,21 +800,26 @@ const LogPeriod = () => {
                           setExcludeFromML(e.target.checked);
                           if (!e.target.checked) {
                             setExclusionReason(null);
-                            setCustomExclusionNote('');
+                            setCustomExclusionNote("");
                           }
                         }}
                         className="sr-only"
                       />
-                      <div className={`w-12 h-6 rounded-full transition-colors ${
-                        excludeFromML ? 'bg-orange-500' : 'bg-gray-300'
-                      }`}>
-                        <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                          excludeFromML ? 'translate-x-6' : 'translate-x-0.5'
-                        } mt-0.5`}></div>
+                      <div
+                        className={`w-12 h-6 rounded-full transition-colors ${
+                          excludeFromML ? "bg-orange-500" : "bg-gray-300"
+                        }`}
+                      >
+                        <div
+                          className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                            excludeFromML ? "translate-x-6" : "translate-x-0.5"
+                          } mt-0.5`}
+                        ></div>
                       </div>
                     </div>
                     <span className="text-sm font-medium text-gray-700">
-                      This period was affected by medication or unusual circumstances
+                      This period was affected by medication or unusual
+                      circumstances
                     </span>
                   </label>
                 </div>
@@ -718,7 +829,9 @@ const LogPeriod = () => {
               {excludeFromML && (
                 <div className="ml-11 space-y-4">
                   <div>
-                    <h4 className="font-medium text-gray-800 mb-3">What affected this period?</h4>
+                    <h4 className="font-medium text-gray-800 mb-3">
+                      What affected this period?
+                    </h4>
                     <div className="grid grid-cols-1 gap-2">
                       {EXCLUSION_REASONS.map((reason) => (
                         <button
@@ -727,14 +840,18 @@ const LogPeriod = () => {
                           className={`p-3 rounded-xl border-2 text-left transition-all ${
                             exclusionReason === reason.value
                               ? `${reason.color} ring-2 ring-orange-300`
-                              : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                              : "bg-gray-50 border-gray-200 hover:bg-gray-100"
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <span className="text-lg">{reason.emoji}</span>
                             <div>
-                              <h5 className="font-medium text-sm">{reason.label}</h5>
-                              <p className="text-xs text-gray-600 mt-1">{reason.description}</p>
+                              <h5 className="font-medium text-sm">
+                                {reason.label}
+                              </h5>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {reason.description}
+                              </p>
                             </div>
                           </div>
                         </button>
@@ -752,9 +869,9 @@ const LogPeriod = () => {
                         value={customExclusionNote}
                         onChange={(e) => setCustomExclusionNote(e.target.value)}
                         placeholder={
-                          exclusionReason === 'emergency_contraception' 
-                            ? 'e.g., Took Plan B 2 days ago, expecting irregular timing...'
-                            : 'Any additional details about what affected this cycle...'
+                          exclusionReason === "emergency_contraception"
+                            ? "e.g., Took Plan B 2 days ago, expecting irregular timing..."
+                            : "Any additional details about what affected this cycle..."
                         }
                         className="w-full p-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm"
                         rows={2}
@@ -771,9 +888,11 @@ const LogPeriod = () => {
                           Why exclude from predictions?
                         </p>
                         <p className="text-xs text-orange-700">
-                          Periods affected by medications like Plan B, stress, illness, or hormonal changes 
-                          don't represent your natural cycle pattern. Excluding them helps our AI give you 
-                          more accurate predictions for your regular cycles.
+                          Periods affected by medications like Plan B, stress,
+                          illness, or hormonal changes don't represent your
+                          natural cycle pattern. Excluding them helps our AI
+                          give you more accurate predictions for your regular
+                          cycles.
                         </p>
                       </div>
                     </div>
@@ -789,12 +908,29 @@ const LogPeriod = () => {
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">
             {/* Flow Selection */}
             <div className="mb-6">
-              <h3 className="font-semibold text-gray-800 mb-3">💧 Flow Intensity</h3>
+              <h3 className="font-semibold text-gray-800 mb-3">
+                💧 Flow Intensity
+              </h3>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { value: 'light', label: 'Light', emoji: '💧', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-                  { value: 'medium', label: 'Medium', emoji: '🩸', color: 'bg-pink-100 text-pink-700 border-pink-200' },
-                  { value: 'heavy', label: 'Heavy', emoji: '🔴', color: 'bg-red-100 text-red-700 border-red-200' },
+                  {
+                    value: "light",
+                    label: "Light",
+                    emoji: "💧",
+                    color: "bg-blue-100 text-blue-700 border-blue-200",
+                  },
+                  {
+                    value: "medium",
+                    label: "Medium",
+                    emoji: "🩸",
+                    color: "bg-pink-100 text-pink-700 border-pink-200",
+                  },
+                  {
+                    value: "heavy",
+                    label: "Heavy",
+                    emoji: "🔴",
+                    color: "bg-red-100 text-red-700 border-red-200",
+                  },
                 ].map((flow) => (
                   <button
                     key={flow.value}
@@ -802,7 +938,7 @@ const LogPeriod = () => {
                     className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
                       selectedFlow === flow.value
                         ? `${flow.color} ring-2 ring-purple-300`
-                        : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+                        : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200"
                     }`}
                   >
                     <div className="text-lg mb-1">{flow.emoji}</div>
@@ -814,7 +950,9 @@ const LogPeriod = () => {
 
             {/* Notes Section */}
             <div>
-              <h3 className="font-semibold text-gray-800 mb-3">📝 Notes (Optional)</h3>
+              <h3 className="font-semibold text-gray-800 mb-3">
+                📝 Notes (Optional)
+              </h3>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -830,11 +968,13 @@ const LogPeriod = () => {
         <div className="space-y-3">
           <button
             onClick={handleLogPeriod}
-            disabled={!isValid || isLogging || (excludeFromML && !exclusionReason)}
+            disabled={
+              !isValid || isLogging || (excludeFromML && !exclusionReason)
+            }
             className={`w-full py-4 rounded-2xl font-semibold transition-all ${
               isValid && !isLogging && (!excludeFromML || exclusionReason)
-                ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-lg'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                ? "bg-purple-500 hover:bg-purple-600 text-white shadow-lg"
+                : "bg-gray-200 text-gray-500 cursor-not-allowed"
             }`}
           >
             {isLogging ? (
@@ -844,7 +984,9 @@ const LogPeriod = () => {
               </div>
             ) : (
               <>
-                {periodType === 'past' ? '📅 Save Period' : '🩸 Start Tracking Period'}
+                {periodType === "past"
+                  ? "📅 Save Period"
+                  : "🩸 Start Tracking Period"}
                 {excludeFromML && (
                   <div className="text-xs mt-1 opacity-90">
                     (Will not affect AI predictions)

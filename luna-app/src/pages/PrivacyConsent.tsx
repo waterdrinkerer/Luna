@@ -174,7 +174,7 @@ const PrivacyConsent = () => {
           {/* Data Security Assurance */}
           <div className="mt-6 pt-4 border-t border-gray-100">
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-              <span>🔐</span>z
+              <span>🔐</span>
               <span>Your data is encrypted and secure</span>
             </div>
           </div>

@@ -1,14 +1,13 @@
 export interface SymptomLog {
   id: string;
-  symptoms?: Record<string, string[]>;
+  date: Date;
   timestamp: string;
-  date: string;
   userId: string;
-  // Add these:
+  symptoms: Record<string, unknown>;
   cyclePhase?: string;
-  severity?: number;
-  notes?: string;
   cycleDay?: number;
+  notes?: string;
+  [key: string]: unknown;
 }
 
 export interface MoodLog {
@@ -36,7 +35,7 @@ export interface SymptomAnalysis {
   topSymptoms: [string, number][];
   mostCommon: string;
   averagePerLog: number;
-  averageSeverity: number; // Add this line
+  averageSeverity: number;
 }
 
 export interface RegularityAnalysis {

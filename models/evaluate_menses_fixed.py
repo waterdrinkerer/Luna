@@ -11,7 +11,7 @@ def evaluate_menses_model_fixed():
     
     # Load model and data
     model = joblib.load("menses_length_model.pkl")
-    df = pd.read_csv("data/cleaned_menses_length_data2.csv")
+    df = pd.read_csv("models/data/cleaned_menses_length_data2.csv")
     
     # Define features
     features = ['Age', 'BMI', 'LengthofCycle', 'MeanBleedingIntensity', 'EstimatedDayofOvulation']

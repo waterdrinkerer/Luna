@@ -10,7 +10,7 @@ const CycleLength = () => {
 const handleNext = () => {
   update({ cycleLength: length });
   console.log('All onboarding data:', data, length);
-  navigate('/profile-pic'); // ✅ go to profile pic page, NOT home
+  navigate('/profile-pic'); 
 };
 
 

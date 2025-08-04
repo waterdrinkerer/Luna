@@ -5,7 +5,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 import joblib
 
 # Load the cleaned dataset
-df = pd.read_csv("data/cleaned_menses_length_data2.csv")
+df = pd.read_csv("models/data/cleaned_menses_length_data2.csv")
 
 # Define features and target
 features = [

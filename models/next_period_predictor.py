@@ -10,7 +10,7 @@ import joblib
 
 # Load the dataset
 print("📊 Loading dataset for Next Period Prediction...")
-df = pd.read_csv("data/menstrual_data.csv")
+df = pd.read_csv("models/data/menstrual_data.csv")
 
 print(f"Original dataset shape: {df.shape}")
 

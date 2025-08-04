@@ -23,7 +23,7 @@ const CycleOverview = () => {
     const loadRealTimeData = async () => {
       const user = auth.currentUser;
       if (user) {
-        // Get base cycle data from periodLogs
+        // Get base cycle data from periodLogs using FIXED calculator
         const freshData = await getMostRecentCycleData(user.uid);
         
         // ✅ ENHANCE with ML predictions
@@ -62,7 +62,9 @@ const CycleOverview = () => {
           phase: phaseData.phase,
           cycleLength: enhancedCycleData.cycleLength,
           mlEnhanced: !!mlPredictions,
-          mlDaysUntil: mlPredictions?.nextPeriod?.daysUntil
+          mlDaysUntil: mlPredictions?.nextPeriod?.daysUntil,
+          isCurrentlyOnPeriod: enhancedCycleData.isCurrentlyOnPeriod,
+          periodDuration: enhancedCycleData.periodDuration
         });
       }
     };
@@ -74,27 +76,36 @@ const CycleOverview = () => {
   
   // ✅ Get cycle data safely
   const lastPeriodStart = realTimeCycleData.lastPeriodStart;
-  // const lastPeriodEnd = realTimeCycleData.lastPeriodEnd;
   const cycleLength = realTimeCycleData.cycleLength || 28;
   
-  // ✅ Current cycle day calculation
+  // ✅ FIXED: Current cycle day calculation - ALWAYS from period START date
   const getCurrentCycleDay = (): number => {
     if (!lastPeriodStart) return 1;
     
     const periodStartDate = lastPeriodStart instanceof Date 
       ? lastPeriodStart 
       : new Date(lastPeriodStart as string | number | Date);
-    
+
+    // ✅ CRITICAL FIX: ALWAYS calculate from period START date
+    // Period start = Cycle Day 1, regardless of whether period is ongoing or completed
     const daysSinceStart = Math.floor((today.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24));
-    const cycleDay = daysSinceStart + 1;
+    let currentCycleDay = daysSinceStart + 1;
+    
+    console.log('📅 CORRECT cycle day calculation:', {
+      lastPeriodStart: periodStartDate.toDateString(),
+      today: today.toDateString(),
+      daysSinceStart,
+      currentCycleDay,
+      isCurrentlyOnPeriod: realTimeCycleData.isCurrentlyOnPeriod
+    });
     
     // Handle edge cases
-    if (cycleDay <= 0) return 1;
-    if (cycleDay > cycleLength + 14) {
-      return ((cycleDay - 1) % cycleLength) + 1;
+    if (currentCycleDay <= 0) return 1;
+    if (currentCycleDay > cycleLength + 14) {
+      return ((currentCycleDay - 1) % cycleLength) + 1;
     }
     
-    return cycleDay;
+    return currentCycleDay;
   };
 
   const currentCycleDay = getCurrentCycleDay();
@@ -107,16 +118,7 @@ const CycleOverview = () => {
       return Math.max(1, mlPredictions.nextPeriod.daysUntil);
     }
     
-    // Fallback to math calculation
-    if (!lastPeriodStart || !cycleLength) return 0;
-    
-    const periodStartDate = lastPeriodStart instanceof Date 
-      ? lastPeriodStart 
-      : new Date(lastPeriodStart as string | number | Date);
-      
-    const daysSinceStart = Math.floor((today.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24));
-    const currentCycleDay = daysSinceStart + 1;
-    
+    // Fallback to math calculation using cycle day
     const daysUntilNext = Math.max(1, cycleLength - currentCycleDay + 1);
     
     console.log('📊 Math calculation fallback:', {
@@ -131,7 +133,7 @@ const CycleOverview = () => {
 
   const daysToNextPeriod = getDaysToNextPeriod();
 
-  // ✅ Calendar strip with safe date handling
+  // ✅ Calendar strip with CORRECT cycle day calculation
   const calendarStrip = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(today);
     date.setDate(today.getDate() + i - 3);
@@ -142,6 +144,7 @@ const CycleOverview = () => {
         ? lastPeriodStart 
         : new Date(lastPeriodStart as string | number | Date);
       
+      // ✅ ALWAYS calculate from period START date
       const daysSinceStart = Math.floor((date.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24));
       const rawCycleDay = daysSinceStart + 1;
       
@@ -163,17 +166,18 @@ const CycleOverview = () => {
       fullDate: date,
       isToday: date.toDateString() === today.toDateString(),
       cycleDay,
-      phase: getPhaseForDay(cycleDay, cycleLength)
+      phase: getPhaseForDay(cycleDay, cycleLength, realTimeCycleData.periodDuration || 5)
     };
   });
 
-  // ✅ Phase detection function
-  function getPhaseForDay(day: number, cycleLength: number) {
+  // ✅ FIXED: Phase detection function with USER'S actual period length
+  function getPhaseForDay(day: number, cycleLength: number, periodLength: number) {
     const ovulationDay = Math.max(14, cycleLength - 14);
     const fertileStart = ovulationDay - 2;
     const fertileEnd = ovulationDay + 1;
     
-    if (day <= 7) return { name: 'period', color: '#EF4444' };
+    // ✅ CORRECT: Use USER'S actual period length
+    if (day <= periodLength) return { name: 'period', color: '#EF4444' };
     if (day < fertileStart) return { name: 'follicular', color: '#8B5CF6' };
     if (day <= fertileEnd) return { name: 'fertile', color: '#06B6D4' };
     if (day <= ovulationDay + 3) return { name: 'ovulation', color: '#059669' };
@@ -181,19 +185,68 @@ const CycleOverview = () => {
     return { name: 'pms', color: '#DC2626' };
   }
 
-  // ✅ Phase timeline
+  // ✅ FIXED: Dynamic phase timeline using USER'S actual period data
   const getPhaseTimeline = () => {
     const ovulationDay = Math.max(14, cycleLength - 14);
     const fertileStart = ovulationDay - 2;
     const fertileEnd = ovulationDay + 1;
     
+    // ✅ CRITICAL FIX: Use USER'S actual period length from their data
+    const periodLength = realTimeCycleData.periodDuration || 5;
+    
+    console.log('🔍 Building CORRECT phase timeline:', {
+      cycleLength,
+      periodLength: periodLength,
+      ovulationDay,
+      fertileStart,
+      fertileEnd,
+      currentCycleDay,
+      userActualPeriodLength: realTimeCycleData.periodDuration
+    });
+    
     return [
-      { name: 'Period', start: 1, end: 7, color: '#EF4444', icon: '🩸' },
-      { name: 'Follicular', start: 8, end: fertileStart - 1, color: '#8B5CF6', icon: '🌸' },
-      { name: 'Fertile Window', start: fertileStart, end: fertileEnd, color: '#06B6D4', icon: '💫' },
-      { name: 'Ovulation', start: ovulationDay + 2, end: ovulationDay + 3, color: '#059669', icon: '🥚' },
-      { name: 'Luteal', start: ovulationDay + 4, end: cycleLength - 5, color: '#F59E0B', icon: '🌙' },
-      { name: 'PMS', start: cycleLength - 4, end: cycleLength, color: '#DC2626', icon: '😤' }
+      { 
+        name: 'Period', 
+        start: 1, 
+        end: periodLength, // ✅ Uses USER'S actual 6-day period
+        color: '#EF4444', 
+        icon: '🩸' 
+      },
+      { 
+        name: 'Follicular', 
+        start: periodLength + 1, // ✅ Starts on day 7 for 6-day period
+        end: fertileStart - 1, 
+        color: '#8B5CF6', 
+        icon: '🌸' 
+      },
+      { 
+        name: 'Fertile Window', 
+        start: fertileStart, 
+        end: fertileEnd, 
+        color: '#06B6D4', 
+        icon: '💫' 
+      },
+      { 
+        name: 'Ovulation', 
+        start: ovulationDay, 
+        end: ovulationDay + 1, 
+        color: '#059669', 
+        icon: '🥚' 
+      },
+      { 
+        name: 'Luteal', 
+        start: ovulationDay + 2, 
+        end: cycleLength - 5, 
+        color: '#F59E0B', 
+        icon: '🌙' 
+      },
+      { 
+        name: 'PMS', 
+        start: cycleLength - 4, 
+        end: cycleLength, 
+        color: '#DC2626', 
+        icon: '😤' 
+      }
     ].filter(phase => phase.start <= phase.end && phase.start <= cycleLength);
   };
 
@@ -251,7 +304,7 @@ const CycleOverview = () => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-xl font-bold mt-6 text-gray-800">🤖 ML Cycle Overview</h1>
+          <h1 className="text-xl font-bold mt-6 text-gray-800"> Cycle Overview</h1>
           <button
             onClick={() => navigate("/log-period", { state: { returnTo: "/cycle-overview" } })}
             className="px-4 py-2 mt-6 bg-purple-500 text-white text-sm font-medium rounded-full shadow-md"
@@ -273,10 +326,11 @@ const CycleOverview = () => {
           </div>
         </div>
 
-        {/* Debug Info */}
-        {/* <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
-          <p><strong>Debug:</strong> Phase: {currentPhaseData.phase}, Cycle Day: {currentCycleDay}/{cycleLength}, Days to Next: {daysToNextPeriod}</p>
-          <p><strong>ML:</strong> {mlPredictions ? `Active (${mlPredictions.nextPeriod?.daysUntil} days predicted)` : 'Not available'}</p>
+        {/* Debug Info - Shows the CORRECT values
+        <div className="mb-4 p-2 bg-green-100 rounded text-xs">
+          <p><strong>✅ CORRECT Debug:</strong> Phase: {currentPhaseData.phase}, Cycle Day: {currentCycleDay}/{cycleLength}, Days to Next: {daysToNextPeriod}</p>
+          <p><strong>Period:</strong> Duration: {realTimeCycleData.periodDuration || 5} days, Currently On Period: {realTimeCycleData.isCurrentlyOnPeriod ? 'Yes' : 'No'}</p>
+          <p><strong>Expected:</strong> Today (Aug 4) = Cycle Day 7 = Follicular Phase ✅</p>
         </div> */}
 
         {/* Main Cycle Info Card */}
@@ -321,6 +375,7 @@ const CycleOverview = () => {
                     className="w-2 h-2 rounded-full mt-1"
                     style={{ backgroundColor: item.phase.color }}
                   />
+                  <p className="text-xs opacity-75 mt-1">D{item.cycleDay}</p>
                 </div>
               ))}
             </div>
@@ -341,7 +396,7 @@ const CycleOverview = () => {
               <p className="text-xl font-bold" style={{ color: pregnancyColor }}>
                 {pregnancyChance}
               </p>
-              <p className="text-xs text-gray-500">Phase: {currentPhaseData.phase}</p>
+              <p className="text-xs text-gray-500">Phase: {currentPhaseData.phase} • Day {currentCycleDay}</p>
               {mlPredictions && (
                 <p className="text-xs text-purple-600 mt-1">🤖 ML Enhanced</p>
               )}
@@ -387,9 +442,9 @@ const CycleOverview = () => {
           </div>
         )}
 
-        {/* Phase Timeline */}
+        {/* ✅ CORRECT: Dynamic Phase Timeline */}
         <div className="bg-white rounded-2xl p-5 shadow-lg mb-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Your Cycle Phases</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Your Current Cycle Phase</h3>
           
           {/* Timeline Bar */}
           <div className="relative mb-6">
@@ -448,11 +503,21 @@ const CycleOverview = () => {
                     <div>
                       <p className="font-medium text-sm text-gray-800">{phase.name}</p>
                       <p className="text-xs text-gray-600">Days {phase.start}-{phase.end}</p>
+                      
                     </div>
                   </div>
                 </div>
               );
             })}
+          </div>
+          
+          {/* ✅ Show CORRECT personalization info */}
+          <div className="mt-4 pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-500">
+              🎯 Personalized for your {realTimeCycleData.periodDuration || 5}-day periods and {cycleLength}-day cycles
+              {mlPredictions && <span className="text-purple-600"> • 🤖 AI Enhanced</span>}
+            </p>
+           
           </div>
         </div>
 

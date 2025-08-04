@@ -13,13 +13,15 @@ import BottomNav from "../components/BottomNav";
 interface PeriodLog {
   id: string;
   startDate: Date;
-  endDate: Date;
-  duration: number;
+  endDate: Date | null; // ✅ FIXED: Allow null for ongoing periods
+  duration: number | null; // ✅ FIXED: Allow null for ongoing periods
   flow?: "light" | "medium" | "heavy";
   notes?: string;
   excludeFromML?: boolean;
   exclusionReason?: string;
   isIrregular?: boolean;
+  isOngoing?: boolean; // ✅ NEW: Track if period is ongoing
+  currentDay?: number; // ✅ NEW: Current day for ongoing periods
 }
 
 interface CalendarDay {
@@ -124,19 +126,39 @@ const CalendarPage = () => {
         periodSnapshot.forEach((doc) => {
           const data = doc.data();
           if (data.startDate) {
-            periods.push({
-              id: doc.id,
-              startDate: new Date(data.startDate),
-              endDate: data.endDate
-                ? new Date(data.endDate)
-                : new Date(data.startDate),
-              duration: data.duration || 5,
-              flow: data.flow || "medium",
-              notes: data.notes || "",
-              excludeFromML: data.excludeFromML || false,
-              exclusionReason: data.exclusionReason,
-              isIrregular: data.isIrregular || false,
-            });
+            // ✅ FIXED: Handle ongoing periods
+            if (data.isOngoing && !data.endDate) {
+              const currentDay = data.currentDay || Math.floor((new Date().getTime() - new Date(data.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+              
+              periods.push({
+                id: doc.id,
+                startDate: new Date(data.startDate),
+                endDate: null,
+                duration: null,
+                flow: data.flow || "medium",
+                notes: data.notes || "",
+                excludeFromML: data.excludeFromML || false,
+                exclusionReason: data.exclusionReason,
+                isIrregular: data.isIrregular || false,
+                isOngoing: true,
+                currentDay: currentDay
+              });
+            }
+            // Handle completed periods
+            else if (data.endDate) {
+              periods.push({
+                id: doc.id,
+                startDate: new Date(data.startDate),
+                endDate: new Date(data.endDate),
+                duration: data.duration || 5,
+                flow: data.flow || "medium",
+                notes: data.notes || "",
+                excludeFromML: data.excludeFromML || false,
+                exclusionReason: data.exclusionReason,
+                isIrregular: data.isIrregular || false,
+                isOngoing: false
+              });
+            }
           }
         });
 
@@ -144,6 +166,8 @@ const CalendarPage = () => {
         console.log("📅 Calendar data loaded:", {
           cycleData: freshCycleData,
           periodsCount: periods.length,
+          ongoingPeriods: periods.filter(p => p.isOngoing).length,
+          completedPeriods: periods.filter(p => !p.isOngoing).length,
           mlAvailable: !!mlPredictions,
         });
       } catch (error) {
@@ -198,15 +222,28 @@ const CalendarPage = () => {
       daysSinceLastPeriod: 0,
     };
 
-    // Check if date is within any logged period
+    // ✅ FIXED: Check if date is within any logged period (including ongoing)
     const loggedPeriod = loggedPeriods.find((period: PeriodLog) => {
       const startDate = new Date(period.startDate);
-      const endDate = new Date(period.endDate);
-
+      
+      // For ongoing periods, check if date is >= startDate and <= today
+      if (period.isOngoing) {
+        const today = new Date();
+        return date >= startDate && date <= today;
+      }
+      
+      // For completed periods, check normal range
+      const endDate = period.endDate ? new Date(period.endDate) : null;
+      if (!endDate) return false;
+      
       return date >= startDate && date <= endDate;
     });
 
     if (loggedPeriod) {
+      const dayInPeriod = Math.floor(
+        (date.getTime() - loggedPeriod.startDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1;
+
       return {
         ...defaultInfo,
         phase: "period",
@@ -214,11 +251,7 @@ const CalendarPage = () => {
         isLoggedPeriod: true,
         isExcludedPeriod: loggedPeriod.excludeFromML || false,
         periodId: loggedPeriod.id,
-        cycleDay:
-          Math.floor(
-            (date.getTime() - loggedPeriod.startDate.getTime()) /
-              (1000 * 60 * 60 * 24)
-          ) + 1,
+        cycleDay: dayInPeriod,
       };
     }
 
@@ -391,6 +424,7 @@ const CalendarPage = () => {
             <h1 className="text-xl font-bold text-gray-800">Cycle Calendar</h1>
             <p className="text-xs text-gray-500">
               {loggedPeriods.length} periods logged •{" "}
+              {loggedPeriods.filter(p => p.isOngoing).length > 0 && "1 active • "}
               {mlPredictions ? "AI Powered" : "Basic Mode"}
             </p>
           </div>
@@ -418,8 +452,18 @@ const CalendarPage = () => {
                 {currentPhaseData.subtext}
               </p>
 
+              {/* Show ongoing period status */}
+              {loggedPeriods.some(p => p.isOngoing) && (
+                <div className="mt-3 pt-3 border-t border-white/20">
+                  <p className="text-xs text-white/80 mb-1">🩸 Active Period</p>
+                  <p className="text-sm font-medium">
+                    Day {loggedPeriods.find(p => p.isOngoing)?.currentDay} ongoing
+                  </p>
+                </div>
+              )}
+
               {/* ML Predictions */}
-              {mlPredictions && (
+              {mlPredictions && !loggedPeriods.some(p => p.isOngoing) && (
                 <div className="mt-3 pt-3 border-t border-white/20">
                   <p className="text-xs text-white/80 mb-1">🤖 AI Insights</p>
                   <p className="text-sm font-medium">

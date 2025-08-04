@@ -5,7 +5,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 import joblib
 
 # Load the cleaned minimal dataset
-df = pd.read_csv("data/improved_cycle_length_model_data.csv")
+df = pd.read_csv("models/data/improved_cycle_length_model_data.csv")
 # Define features and target
 features = ['LengthofMenses', 'Age', 'BMI','EstimatedDayofOvulation','LengthofLutealPhase','TotalDaysofFertility']
 target = 'LengthofCycle'
